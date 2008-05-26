@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.6)
+project(mediabox)
+find_package(Threads REQUIRED)
+add_executable(hat mplayer.cc test.cc)
+target_link_libraries(hat ${CMAKE_THREAD_LIBS_INIT})
