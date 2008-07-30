@@ -2,6 +2,19 @@
 #define  __threading_hh__
 #include <pthread.h>
 
+template <class X> class Thread {
+private:
+	static void * run(void * self) {
+		static_cast<X*>(self)->run();
+		return NULL;
+	}
+public:
+	pthread_t t;
+	~Thread() {}
+	void start() {pthread_create(&t,NULL,run,this);}
+	void join() {pthread_join(t,NULL);}
+};
+
 class Mutex {
 public:
 	pthread_mutex_t m;

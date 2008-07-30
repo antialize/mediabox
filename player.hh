@@ -11,7 +11,7 @@ public:
 	virtual void setPos(float p) = 0;
 	virtual void setMute(bool bute) = 0;
 	virtual void stop() = 0;
-	virtual void play(char * path) = 0;
+	virtual void play(const char * path) = 0;
 	virtual void wait() = 0;
 };
 

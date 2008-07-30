@@ -79,6 +79,7 @@ private:
 	}
 	static void * readThread(void * _self) {
 		static_cast<MPlayer*>(_self)->realReadThread();
+		return NULL;
 	}
 
 public:
@@ -106,7 +107,7 @@ public:
 		mplayer = -1;
 	}
 
-	void play(char * file) {
+	void play(const char * file) {
 		int inpipe[2];
 		int outpipe[2];
 		if(pipe(inpipe) == -1) DIE("pipe");
@@ -114,7 +115,7 @@ public:
 		mplayer = fork();
 		if(mplayer == -1) DIE("fork");
 		if(mplayer == 0) {
-			char * argv[] = {"mplayer","-quiet","-slave","-fs","-zoom",file,NULL};
+			char * argv[] = {"mplayer","-quiet","-slave","-fs","-zoom",(char *)file,NULL};
 			dup2(inpipe[0],0);
 			dup2(outpipe[1],1);
 			execvp("mplayer", argv);
