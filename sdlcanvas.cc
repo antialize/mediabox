@@ -308,7 +308,6 @@ public:
 		SDL_Init(SDL_INIT_VIDEO);
 		atexit(SDL_Quit);
 		
-		//720x576
 		screen = SDL_SetVideoMode(720, 576, 32,
 								  SDL_SWSURFACE|SDL_RESIZABLE|SDL_FULLSCREEN);
 		
@@ -803,6 +802,7 @@ void SDLFill::update() {
 		}
 		SDL_UnlockSurface(s);
 	}
+	dirty=false;
 }
 
 void SDLFill::setRadius(float _) {r=_; dirty=true; invalidate();}
