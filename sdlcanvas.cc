@@ -652,7 +652,7 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 				SDL_SWSURFACE, w, h, f->BitsPerPixel, f->Rmask,f->Gmask,f->Bmask,f->Amask);
 			if(!d) 
 				exit(1);
-			//i->state=2; //Skip fast scale
+			i->state=2; //Skip fast scale
 			if(i->state == 1) {
 				switch(s->format->BytesPerPixel) {
 				case 1: nearestNeighborScale<1>(d,s); break;
@@ -678,7 +678,6 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 				scaleQueue.push(i);
 				sqMutex.unlock();
 			}
-
 			for(inplace_list<SDLImage, users_reader<SDLImage> >::iterator x= i->users.begin();
 				x != i->users.end();
 				++x) {
