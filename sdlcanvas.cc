@@ -175,9 +175,9 @@ public:
 	static void start();
 	static void stop();
 
-	SDLImage(SDLStack * s, SDLCard * c, Rect r, uint32_t z, char * path,bool keepaspect=true);
+	SDLImage(SDLStack * s, SDLCard * c, Rect r, uint32_t z, const char * path,bool keepaspect=true);
 	void render(IRect& r);
-	void change(char *);
+	void change(const char *);
 	void assosiate();
 	void disassosiate();
 	~SDLImage();
@@ -230,7 +230,7 @@ private:
 public:
 	SDLCard(SDLStack * s);
 	void invalidate();
-	Image * addImage(char * path, uint32_t zindex, Rect r, bool keepAspcet=true);
+	Image * addImage(const char * path, uint32_t zindex, Rect r, bool keepAspcet=true);
 	Fill * addFill(const Color & color, uint32_t zindex, Rect rect);
 	Label * addLabel(const char * value, uint32_t zindex, float x, float y, float size);
 	void remove(SDLElement* elm);
@@ -633,7 +633,7 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 			}
 			i->inQueue = false;
 			sqMutex.unlock();
-			printf("scaling %16X @ %dx%d\n",i->unscaled,i->w,i->h);
+			//printf("scaling %16X @ %dx%d\n",i->unscaled,i->w,i->h);
 			SDL_Surface * s = i->unscaled->surface;
 			SDL_PixelFormat * f = s->format;
 			uint32_t w = i->w;
@@ -719,8 +719,8 @@ void SDLImage::rescale() {
 	assosiate();
 }
 
-SDLImage::SDLImage(SDLStack * s, SDLCard * c, Rect r, uint32_t z, char * p, bool ka)
-	:SDLElement(s,c,r,z),scaled(NULL),keepAspect(ka),path(p) {
+SDLImage::SDLImage(SDLStack * s, SDLCard * c, Rect r, uint32_t z, const char * p, bool ka)
+  :SDLElement(s,c,r,z),scaled(NULL),keepAspect(ka),path(NULL) {
 	change(p);
 }
 
@@ -737,9 +737,9 @@ void SDLImage::render(IRect& r) {
 	scaled->mutex.unlock();
 }
 
-void SDLImage::change(char * p) {
+void SDLImage::change(const char * p) {
 	disassosiate();
-	path = p;
+	path = (char *)p;
 	assosiate();
 }
 
@@ -831,7 +831,7 @@ void SDLFill::render(IRect &r) {
 std::map< std::pair< std::string, int>, TTF_Font *> SDLLabel::fontCache;
 
 SDLLabel::SDLLabel(SDLStack * stack, SDLCard * card, uint32_t z, float x, float y, const char * txt, float fs):
-	SDLElement(stack,card,Rect(x,y,x,y),z), fontName("/usr/share/fonts/ttf-bitstream-vera/Vera.ttf"), size(fs), text(txt), 
+	SDLElement(stack,card,Rect(x,y,x,y),z), fontName("ttf-bitstream-vera/Vera.ttf"), size(fs), text(txt), 
 	mw(1), renderedText(NULL), color(0,0,0)
 {
 	if(!TTF_WasInit() && TTF_Init()==-1) {
@@ -847,11 +847,25 @@ void SDLLabel::rescale() {
 
 void SDLLabel::reload() {
 	invalidate();
-	fontHeight = (int)((float)stack->screen->h * size);
-	if( fontCache.count( make_pair(fontName, fontHeight) ) == 0)
-		fontCache[make_pair(fontName, fontHeight)] = TTF_OpenFont(fontName,fontHeight);
-	font = fontCache[make_pair(fontName, fontHeight)];
 	if(renderedText != NULL) {SDL_FreeSurface(renderedText); renderedText=NULL;}
+	fontHeight = (int)((float)stack->screen->h * size);
+	if( fontCache.count( make_pair(fontName, fontHeight) ) == 0) {
+		const char * places[] = {
+			"/usr/share/fonts/","/usr/share/fonts/truetype/",
+			"fonts/","",NULL};
+		for(const char ** place=places; *place; ++place) {
+			char path[2024];
+			sprintf(path,"%s%s",*place,fontName);
+			TTF_Font * f = TTF_OpenFont(path,fontHeight);
+			if(f) {
+				printf("%s\n",path);
+				fontCache[make_pair(fontName, fontHeight)] = f;
+				break;
+			}
+		}
+	}
+	font = fontCache[make_pair(fontName, fontHeight)];
+	if(!font) return; 
 	SDL_Color c = {0,0,0};
 	SDL_Surface * s = TTF_RenderUTF8_Solid(font, text, c);
 	renderedText = SDL_DisplayFormatAlpha(s);
@@ -909,7 +923,7 @@ void SDLCard::addElement(SDLElement * e) {
 	e->invalidate();
 }
 
-Image * SDLCard::addImage(char * path, uint32_t zindex, Rect r, bool keepAspect) {
+Image * SDLCard::addImage(const char * path, uint32_t zindex, Rect r, bool keepAspect) {
 	SDLImage * f = new SDLImage(stack,this,r,zindex,path,keepAspect);
 	addElement(f);
 	return f;

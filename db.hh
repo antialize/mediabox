@@ -1,5 +1,6 @@
 #ifndef __db_hh__
 #define __db_hh__
+#include <exception>
 
 class DB {
 public:
@@ -10,5 +11,7 @@ public:
 };
 
 DB * createMemoryDB();
+#ifdef __HAVE_MYSQL__
 DB * createMysqlDB();
+#endif
 #endif //__db_hh__

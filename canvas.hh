@@ -38,7 +38,7 @@ public:
 
 class Image: public virtual Element {
 public:
-	virtual void change(char * image) = 0;
+	virtual void change(const char * image) = 0;
 };
 
 class Fill: public virtual Element {
@@ -60,7 +60,7 @@ public:
 class Card {
 public:
 	virtual ~Card() {};
-	virtual Image * addImage(char * image, uint32_t zindex, Rect r, bool keepAspect=true) = 0;
+	virtual Image * addImage(const char * image, uint32_t zindex, Rect r, bool keepAspect=true) = 0;
 	virtual Fill * addFill(const Color & c, uint32_t zindex, Rect r) = 0;
 	virtual Label * addLabel(const char * value, uint32_t zindex, float x, float y, float size) = 0;
 };

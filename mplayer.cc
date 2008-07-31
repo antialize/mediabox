@@ -23,7 +23,7 @@ private:
 	Cond length_cond;
 	Cond pos_cond;
 	pthread_t rt;
-	template <typename T> T get(char * cmd,Cond & cond,volatile T & elm) {
+	template <typename T> T get(const char * cmd,Cond & cond,volatile T & elm) {
 		T tmp;
 		m.lock();
 		write(in,cmd,strlen(cmd));
@@ -32,7 +32,7 @@ private:
 		m.unlock();
 		return tmp;
 	}
-	void set(char * cmd,...) {
+	void set(const char * cmd,...) {
 		char buff[128];
 		va_list ap;
 		va_start(ap, cmd);
@@ -41,7 +41,7 @@ private:
 		va_end(ap);
 	}
 
-	template <typename T> bool readVar(char * line, char *scan, T & res, Cond & cond) {
+	template <typename T> bool readVar(char * line, const char *scan, T & res, Cond & cond) {
 		char * i = strchr(scan,'=');
 		if(strncmp(line,scan,i-scan+1)) return false;
 		m.lock();
@@ -115,10 +115,10 @@ public:
 		mplayer = fork();
 		if(mplayer == -1) DIE("fork");
 		if(mplayer == 0) {
-			char * argv[] = {"mplayer","-quiet","-slave","-fs","-zoom",(char *)file,NULL};
+			const char * argv[] = {"mplayer","-quiet","-slave","-fs","-zoom",file,NULL};
 			dup2(inpipe[0],0);
 			dup2(outpipe[1],1);
-			execvp("mplayer", argv);
+			execvp("mplayer", (char **)argv);
 			exit(2);
 		}
 		in = inpipe[1];

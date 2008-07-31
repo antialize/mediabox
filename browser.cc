@@ -133,7 +133,7 @@ public:
 			Color(255,0,0,255) , Color(255,0,0,100),
 			Color(100,0,0,255) , Color(100,0,0,255) );
 		
-		filesFill = _card->addFill(Color(500,50,255,100),0,Rect(0.06, 0.06, 0.56, 0.94));
+		filesFill = _card->addFill(Color(50,50,255,100),0,Rect(0.06, 0.06, 0.56, 0.94));
 		filesFill->setGradient(
 			Color(20,20,255,200) , Color(20,20,255,100),
 			Color(20,20,255,50) , Color(20,20,255,100) );
