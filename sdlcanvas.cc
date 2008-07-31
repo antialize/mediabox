@@ -472,17 +472,18 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 				continue;
 			}
 			i->inQueue = false;
+			i->mutex.unlock();
 			lqMutex.unlock();
 			
 			printf("load %s\n",i->path);
 			SDL_Surface * s = IMG_Load(i->path);
 			if(!s) {
-				i->mutex.unlock();
 				continue;
 			}
-			i->surface =  SDL_DisplayFormatAlpha(s);
+			SDL_Surface * s2 = SDL_DisplayFormatAlpha(s);
 			SDL_FreeSurface(s);
-			
+			i->mutex.lock();
+			i->surface = s2;
 			Scaled::sqMutex.lock();
 			for(usermap_t::iterator x=i->users.begin(); x != i->users.end(); ++x) {
 				x->second->state = 1;
@@ -635,6 +636,7 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 				continue;
 			}
 			i->inQueue = false;
+
 			sqMutex.unlock();
 			//printf("scaling %16X @ %dx%d\n",i->unscaled,i->w,i->h);
 			SDL_Surface * s = i->unscaled->surface;
@@ -645,34 +647,38 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 				if(w*s->h < h*s->w) h = (s->h * w) / s->w;
 				else w = (s->w * h) / s->h;
 			}
-			i->surface = SDL_CreateRGBSurface(
+			i->mutex.unlock();
+			SDL_Surface * d = SDL_CreateRGBSurface(
 				SDL_SWSURFACE, w, h, f->BitsPerPixel, f->Rmask,f->Gmask,f->Bmask,f->Amask);
-			if(i->surface == NULL) {
+			if(!d) 
 				exit(1);
-			}
-			
-			i->state=2; //Skip fast scale
+			//i->state=2; //Skip fast scale
 			if(i->state == 1) {
 				switch(s->format->BytesPerPixel) {
-				case 1: nearestNeighborScale<1>(i->surface,s); break;
-				case 2: nearestNeighborScale<2>(i->surface,s); break;
-				case 3: nearestNeighborScale<3>(i->surface,s); break;
-				case 4: nearestNeighborScale<4>(i->surface,s); break;
+				case 1: nearestNeighborScale<1>(d,s); break;
+				case 2: nearestNeighborScale<2>(d,s); break;
+				case 3: nearestNeighborScale<3>(d,s); break;
+				case 4: nearestNeighborScale<4>(d,s); break;
 				}
-				i->state=2;
+			} else if(i->state ==2 ) {
+				switch(s->format->BytesPerPixel) {
+				case 1: bilinearishInterpolationScale<1>(d,s); break;
+				case 2: bilinearishInterpolationScale<2>(d,s); break;
+				case 3: bilinearishInterpolationScale<3>(d,s); break;
+				case 4: bilinearishInterpolationScale<4>(d,s); break;
+				}
+			}
+			i->mutex.lock();
+			if(i->surface) {SDL_FreeSurface(i->surface); i->surface=NULL;}
+			i->surface = d;
+			++i->state;
+			if(i->state < 3) {
 				sqMutex.lock();
 				i->inQueue = true;
 				scaleQueue.push(i);
 				sqMutex.unlock();
-			} else if(i->state ==2 ) {
-				switch(s->format->BytesPerPixel) {
-				case 1: bilinearishInterpolationScale<1>(i->surface,s); break;
-				case 2: bilinearishInterpolationScale<2>(i->surface,s); break;
-				case 3: bilinearishInterpolationScale<3>(i->surface,s); break;
-				case 4: bilinearishInterpolationScale<4>(i->surface,s); break;
-				}
-				i->state=3;
 			}
+
 			for(inplace_list<SDLImage, users_reader<SDLImage> >::iterator x= i->users.begin();
 				x != i->users.end();
 				++x) {
