@@ -109,7 +109,7 @@ public:
 		update();
 	}
 
-	STDBrowser(Stack * s, BrowserHook * h, DB * d): _stack(s), _hook(h), db(d) {
+	STDBrowser(Stack * s, BrowserHook * h, DB * d): _stack(s), _hook(h), oldTop(0), db(d) {
 		_card = s->constructCard();
 		const char * k1[]={"browser",NULL};
 		const char * k2[]={"browser","directory",NULL};

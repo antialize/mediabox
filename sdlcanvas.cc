@@ -350,13 +350,14 @@ uint32_t SDLElement::zindex() {return zidx;}
 void SDLElement::setzindex(uint32_t) {}
 
 void SDLElement::move(float x,float y) { 
-	//if(_rect.l == x && 	_rect.t == y) return;
+	if(_rect.l == x && 	_rect.t == y) return;
 	_rect.b += y - _rect.t;
 	_rect.r += x - _rect.l;
 	_rect.l = x;
 	_rect.t = y;
 	IRect i = stack->irect(_rect);
-	//if(i == irect) return;
+	if(i == irect) return;
+	invalidate();
 	irect = i;
 	invalidate();
 	stack->update();
