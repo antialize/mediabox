@@ -307,8 +307,11 @@ public:
 		ni = &ir2;
 		SDL_Init(SDL_INIT_VIDEO);
 		atexit(SDL_Quit);
-		screen = SDL_SetVideoMode(640, 480, 32,
-								  SDL_HWSURFACE|SDL_DOUBLEBUF|SDL_RESIZABLE);
+		
+		//720x576
+		screen = SDL_SetVideoMode(720, 576, 32,
+								  SDL_SWSURFACE|SDL_RESIZABLE|SDL_FULLSCREEN);
+		
 		SDLImage::start();
 	}
 
