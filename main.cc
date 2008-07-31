@@ -4,6 +4,7 @@
 #include "db.hh"
 #include "input.hh"
 #include "player.hh"
+#include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <stdio.h>

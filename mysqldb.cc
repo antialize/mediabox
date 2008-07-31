@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <string.h>
 using namespace std;
 
 class MysqlDB: public DB {
@@ -14,7 +15,7 @@ public:
 	
 	MysqlDB() {
 		mysql_init(&mysql);
-		if(!mysql_real_connect(&mysql,"kenshin","mediabox","mediabox","mediabox",3306,NULL,0)) {
+		if(!mysql_real_connect(&mysql,"192.168.0.1","mediabox","mediabox","mediabox",3306,NULL,0)) {
 			fprintf(stderr, "Failed to connect to database: Error: %s\n",
 					mysql_error(&mysql));
 			throw false;

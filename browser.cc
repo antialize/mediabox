@@ -7,7 +7,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <algorithm>
 
 class STDBrowser: public Browser, public InputListener {
 public:
