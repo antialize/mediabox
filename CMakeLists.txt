@@ -20,5 +20,5 @@ if(MYSQL_FOUND)
 endif(MYSQL_FOUND)
 
 include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR} ${SDLTTF_INCLUDE_DIR})
-add_executable(mediabox mplayer.cc main.cc sdlcanvas.cc sdlinput.cc browser.cc memorydb.cc ${mysqlSources})
+add_executable(mediabox mplayer.cc main.cc sdlcanvas.cc sdlinput.cc browser.cc memorydb.cc ${mysqlSources} config.cc)
 target_link_libraries(mediabox ${CMAKE_THREAD_LIBS_INIT} ${SDL_LIBRARY} ${SDLIMAGE_LIBRARY} ${SDLTTF_LIBRARY} ${mysqlLibs})

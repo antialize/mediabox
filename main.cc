@@ -44,7 +44,7 @@ int main(int argc, char ** argv) {
 	InputStack * input = createSDLInputStack();
 	input->pushListener(stack);
 	Card * c = stack->constructCard();
-	c->addImage("stOrmblue-1.1-0.jpg",0,Rect(0,0,1,1),false);
+	c->addImage("stOrmblue-scaled.jpg",0,Rect(0,0,1,1),false);
 	stack->pushCard(c);
 
 	DB * db = NULL;

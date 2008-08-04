@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include "config.hh"
 #include <string.h>
 using namespace std;
 
@@ -14,8 +15,15 @@ public:
 	map< string, pair<vector<string>,vector<string> > > dbdesc;
 	
 	MysqlDB() {
+		if(!cfg()("mysql.use",false)) throw false;
 		mysql_init(&mysql);
-		if(!mysql_real_connect(&mysql,"192.168.0.1","mediabox","mediabox","mediabox",3306,NULL,0)) {
+		if(!mysql_real_connect(&mysql,
+							   cfg()("mysql.host","127.0.0.1"),
+							   cfg()("mysql.user","mediabox"),
+							   cfg()("mysql.password","password"),
+							   cfg()("mysql.db","mediabox"),
+							   cfg()("mysql.port",3306)
+							   ,NULL,0)) {
 			fprintf(stderr, "Failed to connect to database: Error: %s\n",
 					mysql_error(&mysql));
 			throw false;
