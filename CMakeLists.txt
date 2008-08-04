@@ -7,7 +7,7 @@ find_package(SDL_image REQUIRED)
 find_package(SDL_ttf REQUIRED)
 find_package(MySQL)
 
-set(CMAKE_CXX_FLAGS "-Wall -ggdb")
+set(CMAKE_CXX_FLAGS "-Wall -O2 -pg")
 
 set(mysqlSources)
 set(mysqlLibs)

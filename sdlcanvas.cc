@@ -310,7 +310,7 @@ public:
 		atexit(SDL_Quit);
 		
 		screen = SDL_SetVideoMode(720, 576, 32,
-								  SDL_SWSURFACE|SDL_RESIZABLE|SDL_FULLSCREEN); 
+								  SDL_SWSURFACE|SDL_RESIZABLE); 
 		
 		SDLImage::start();
 	}
@@ -487,6 +487,7 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 			i->surface = s2;
 			Scaled::sqMutex.lock();
 			for(usermap_t::iterator x=i->users.begin(); x != i->users.end(); ++x) {
+			  printf("%dx%d vs %dx%d\n",x->second->w,x->second->h,s2->w,s2->h);
 				if(x->second->w == s2->w && x->second->h == s2->h) {
 					x->second->mutex.lock();
 					x->second->ownSurface = false;
@@ -494,10 +495,11 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 					x->second->state = 3;
 					x->second->invalidate();
 					x->second->mutex.unlock();
+				} else {
+				  x->second->state = 1;
+				  x->second->inQueue = true;
+				  Scaled::scaleQueue.push(x->second);
 				}
-				x->second->state = 1;
-				x->second->inQueue = true;
-				Scaled::scaleQueue.push(x->second);
 			}
 			i->mutex.unlock();
 			Scaled::sqCond.signal();
