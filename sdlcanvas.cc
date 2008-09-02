@@ -13,6 +13,9 @@
 #include <utility>
 #include <ext/hash_map>
 #include "util.hh"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 class SDLElement;
@@ -454,6 +457,8 @@ Unscaled::~Unscaled() {
 	mutex.unlock();
 }
 
+#define STR(x) #x
+#define XSTR(x) STR(x)
 
 struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 	void run() {
@@ -475,9 +480,18 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 			i->inQueue = false;
 			i->mutex.unlock();
 			lqMutex.unlock();
-			
-			printf("load %s\n",i->path);
-			SDL_Surface * s = IMG_Load(i->path);
+
+			char path[2048];
+			strcpy(path,i->path);
+			if(path[0] != '/') {
+				int x = open(path,O_RDONLY);
+				if(x == -1) 
+					sprintf(path, "%s/share/mediabox/%s", XSTR(INSTALL_PREFIX) , i->path);
+				else 
+					close(x);
+			}
+			printf("load %s\n",path);
+			SDL_Surface * s = IMG_Load(path);
 			if(!s) {
 				continue;
 			}
