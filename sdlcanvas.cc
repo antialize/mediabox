@@ -16,7 +16,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include "config.hh"
 
 class SDLElement;
 class SDLImage;
@@ -486,7 +486,7 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 			if(path[0] != '/') {
 				int x = open(path,O_RDONLY);
 				if(x == -1) 
-					sprintf(path, "%s/share/mediabox/%s", XSTR(INSTALL_PREFIX) , i->path);
+					sprintf(path, "%s/%s", cfg()("data_path", XSTR(INSTALL_PREFIX) "/share/mediabox/") , i->path);
 				else 
 					close(x);
 			}

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
+#include "config.hh"
 
 struct tolower {
 	int operator() (int i) {return std::tolower(i);}
@@ -34,7 +35,7 @@ public:
 		p->wait();
 		delete p;
 	}
-	const std::string defaultDir() {return "/home/";}
+	const std::string defaultDir() {return cfg()("video_root","/home/");}
 };
 
 int main(int argc, char ** argv) {
@@ -44,7 +45,7 @@ int main(int argc, char ** argv) {
 	InputStack * input = createSDLInputStack();
 	input->pushListener(stack);
 	Card * c = stack->constructCard();
-	c->addImage("stOrmblue-scaled.jpg",0,Rect(0,0,1,1),false);
+	c->addImage(cfg()("background","stOrmblue-scaled.jpg"),0,Rect(0,0,1,1),false);
 	stack->pushCard(c);
 
 	DB * db = NULL;

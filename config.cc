@@ -5,20 +5,30 @@
 
 using namespace std;
 
+
+struct scmp {
+	bool operator() (const char * a, const char * b) const {
+		return strcmp(a,b) < 0;
+	}
+};
+
 class RealConfig: public Config {	
 private:
 	char * data;
-	typedef map<const char *, const char *> m_t;
+	typedef map<const char *, const char *, scmp> m_t;
 	m_t values;
 public:
 	RealConfig() {								
 		data = NULL;
-		FILE * f = fopen("~mediabox","rb");
+		char buff[1024];
+		sprintf(buff,"%s/.mediabox",getenv("HOME"));
+		FILE * f = fopen(buff,"rb");
 		if(!f) return;
-		size_t s = fseek(f,0,SEEK_END);
+		fseek(f,0,SEEK_END);
+		size_t s = ftell(f);
 		fseek(f,0,SEEK_SET);
 		data = (char *)malloc(s+1);
-		fread(data,1,s,f);
+		fread(data,s,1,f);
 		fclose(f);
 		data[s] = '\0';
 		for(size_t i=0; i < s;++i) {
@@ -27,14 +37,12 @@ public:
 			while(data[i] != '#' && data[i] != '=' &&
 				  data[i] != '\n' && data[i] != ' ' &&
 				  data[i] != '\0' && data[i] != '\t') ++i;
-			if(data[i] == '\t' || data[i] != ' ') {
-				data[i] = '\0'; 	++i;
-				while(data[i] == '\t' || data[i] == ' ') ++i;
-			}
+			while(data[i] == '\t' || data[i] == ' ') {data[i] = '\0'; ++i;}
 			if(data[i] == '=') {
+				data[i] = '\0';
 				++i;
 				int nbl=i;
-				while(data[i] == '\t' || data[i] == ' ') ++i;
+				while(data[i] == '\t' || data[i] == ' ') {data[i] = '\0'; ++i;}
 				char * val=data+i;
 				while(data[i] != '\n' && data[i] != '\0' 
 					  && data[i] != '#') {
