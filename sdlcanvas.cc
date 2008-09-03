@@ -313,7 +313,7 @@ public:
 		atexit(SDL_Quit);
 		
 		screen = SDL_SetVideoMode(720, 576, 32,
-								  SDL_SWSURFACE|SDL_RESIZABLE); //SDL_FULLSCREEN); 
+								  SDL_SWSURFACE | SDL_RESIZABLE | (cfg()("fullscreen",true)?SDL_FULLSCREEN:0) );
 		SDLImage::start();
 	}
 
