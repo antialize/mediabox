@@ -22,8 +22,8 @@ public:
 		specialMap[SDLK_RETURN] = InputListener::enter;
 	}
 	
-	void pushListener(InputListener * l) {ls.push_back(l);}
-	InputListener * popListener() {InputListener * l=ls.back();ls.pop_back();return l;}
+	void pushListener(InputListener * l) {ls.push_front(l);}
+	InputListener * popListener() {InputListener * l=ls.front();ls.pop_front();return l;}
 	void removeListener(InputListener * l) {ls.remove(l);}
 
 	bool handleEvent(SDL_Event & event) {
@@ -55,6 +55,16 @@ public:
 			break;
 		}
 		return !dead;
+	}
+
+	void triggerSpecialKey(int key) {
+		for(ll::iterator i=ls.begin(); i != ls.end(); ++i)
+			if( (*i)->onSpecialKey(key) ) break;
+	}
+	
+	void triggerKey(int key) {
+		for(ll::iterator i=ls.begin(); i != ls.end(); ++i)
+			if( (*i)->onKey(key) ) break;
 	}
 	
 	bool wait() {

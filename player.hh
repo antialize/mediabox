@@ -1,7 +1,8 @@
 #ifndef __player_hh__
 #define __player_hh__
+#include "input.hh"
 
-class Player {
+class Player: public InputListener {
 public:
 	virtual ~Player() {};
 	virtual void setVolume(float volume) = 0;
@@ -13,6 +14,7 @@ public:
 	virtual void stop() = 0;
 	virtual void play(const char * path) = 0;
 	virtual void wait() = 0;
+	virtual bool onSpecialKey(int i) = 0;
 };
 
 Player * constructMPlayer();

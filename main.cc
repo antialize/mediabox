@@ -17,6 +17,7 @@ struct tolower {
 
 class VideoBrowserHook: public BrowserHook {
 public:
+	InputStack * input;
 	virtual void onExit(Browser * b) {
 	};
 	virtual bool include(const std::string & path) {
@@ -31,8 +32,11 @@ public:
 	const std::string name() {return "video";}
 	virtual void execute(const std::string & path) {
 		Player * p = constructMPlayer();
+		input->pushListener(p);
 		p->play(path.c_str());
 		p->wait();
+		printf("pop\n");
+		input->popListener();
 		delete p;
 	}
 	const std::string defaultDir() {return cfg()("video_root","/home/");}
@@ -43,6 +47,11 @@ int main(int argc, char ** argv) {
 	stack->lockLayout();
 	VideoBrowserHook hook;
 	InputStack * input = createSDLInputStack();
+	hook.input=input;
+	#ifdef __HAVE_CWIID__
+	InputHandler * wiimote = createWiimoteInputHandler(input);
+	#endif //__HAVE_CWIID__
+	
 	input->pushListener(stack);
 	Card * c = stack->constructCard();
 	c->addImage(cfg()("background","stOrmblue-scaled.jpg"),0,Rect(0,0,1,1),false);
@@ -58,7 +67,13 @@ int main(int argc, char ** argv) {
 	Browser * b = constructSTDBrowser(stack,&hook,db);
 	stack->unlockLayout();
 	b->run(input);
+
 	delete b;
+
+    #ifdef __HAVE_CWIID__
+	delete wiimote;
+	#endif //__HAVE_CWIID__
+
 	delete input;
 	delete stack;
 	delete db;

@@ -82,6 +82,7 @@ private:
 		return NULL;
 	}
 
+
 public:
 	MPlayer() {mplayer=in=out=-1;}
 	~MPlayer() {stop();}
@@ -94,16 +95,18 @@ public:
 	void stop() {
 		if(mplayer == -1) return;
 		set("quit\n");
-		close(in);
-		close(out);
-		waitpid(mplayer,NULL,0);
+		if(in) {close(in); in=0;}
+		if(out) {close(out); out=0;}
+		while(waitpid(mplayer,NULL,WNOHANG) == 0)
+			usleep(500000);
 		mplayer = -1;
 	}
 	void wait() {
 		if(mplayer == -1) return;
-		close(in);
-		close(out);
-		waitpid(mplayer,NULL,0);
+		while(waitpid(mplayer,NULL,WNOHANG) == 0)
+			usleep(500000);
+		if(in) close(in);
+		if(out) close(out);
 		mplayer = -1;
 	}
 
@@ -124,6 +127,16 @@ public:
 		in = inpipe[1];
 		out = outpipe[0];
 		pthread_create(&rt,NULL,readThread,this);
+	}
+
+	bool onSpecialKey(int key) {
+		printf("hat %d\n",key);
+		switch(key) {
+		case escape:
+			stop();
+			return true;
+		}
+		return false;
 	}
 };
 
