@@ -31,13 +31,12 @@ public:
 
 	const std::string name() {return "video";}
 	virtual void execute(const std::string & path) {
-		Player * p = constructMPlayer();
-		input->pushListener(p);
-		p->play(path.c_str());
-		p->wait();
-		printf("pop\n");
-		input->popListener();
-		delete p;
+	  int mplayer = fork();
+	  if(mplayer == 0) {
+	    const char * argv[] = {"mplayer","-fs","-zoom",path.c_str(),NULL};
+	    execvp("mplayer", (char **)argv);
+	    exit(2);
+	  }
 	}
 	const std::string defaultDir() {return cfg()("video_root","/home/");}
 };

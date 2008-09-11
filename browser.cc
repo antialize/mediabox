@@ -102,11 +102,7 @@ public:
 		oldTop=top;
 	}
 
-	void changeDir(std::string dir) {
-		if(dir.empty() || dir=="/") dir="/";
-		else if(dir[dir.size()-1] == '/') 
-			dir.resize(dir.size()-1);
-
+	void storeDirIndex() {
 		if(!this->dir.empty()) {
 			const char * k[] = {_hook->name().c_str(), this->dir.c_str(), NULL};
 			char x[10];
@@ -114,6 +110,14 @@ public:
 			const char * v[] = {x, NULL};
 			db->update("browser_directory_index",k,v);
 		}
+	}
+
+	void changeDir(std::string dir) {
+		if(dir.empty() || dir=="/") dir="/";
+		else if(dir[dir.size()-1] == '/') 
+			dir.resize(dir.size()-1);
+
+		storeDirIndex();
 		const char * k[] = {_hook->name().c_str(), dir.c_str(), NULL};
 		char x[10];
 		char * v[] = {x, NULL};
@@ -203,12 +207,14 @@ public:
 			_stack->lockLayout();
 			--idx;
 			update();
+			storeDirIndex();
 			_stack->unlockLayout();
 			return true;
 		case down:
 			_stack->lockLayout();
 			++idx;
 			update();
+			storeDirIndex();
 			_stack->unlockLayout();
 			return true;
 		case left:

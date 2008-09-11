@@ -44,8 +44,4 @@ public:
 
 InputStack * createSDLInputStack();
 
-#ifdef __HAVE_CWIID__
-InputHandler * createWiimoteInputHandler(InputStack * stack);
-#endif //__HAVE_CWIID__
-
 #endif //__input_hh__

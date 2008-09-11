@@ -97,14 +97,12 @@ public:
 		set("quit\n");
 		if(in) {close(in); in=0;}
 		if(out) {close(out); out=0;}
-		while(waitpid(mplayer,NULL,WNOHANG) == 0)
-			usleep(500000);
+		waitpid(mplayer,NULL,0); 
 		mplayer = -1;
 	}
 	void wait() {
 		if(mplayer == -1) return;
-		while(waitpid(mplayer,NULL,WNOHANG) == 0)
-			usleep(500000);
+		waitpid(mplayer,NULL,0); 
 		if(in) close(in);
 		if(out) close(out);
 		mplayer = -1;
@@ -117,8 +115,8 @@ public:
 		if(pipe(outpipe) == -1) DIE("pipe");
 		mplayer = fork();
 		if(mplayer == -1) DIE("fork");
-		if(mplayer == 0) {
-			const char * argv[] = {"mplayer","-quiet","-slave","-fs","-zoom",file,NULL};
+		if(mplayer == 0) { 
+			const char * argv[] = {"mplayer","-quiet","-slave","-fs","-zoom","-ontop",file,NULL};
 			dup2(inpipe[0],0);
 			dup2(outpipe[1],1);
 			execvp("mplayer", (char **)argv);
@@ -130,11 +128,17 @@ public:
 	}
 
 	bool onSpecialKey(int key) {
-		printf("hat %d\n",key);
 		switch(key) {
-		case escape:
-			stop();
-			return true;
+		case escape:		       
+		  printf("STOP\n");
+		  stop();
+		  return true;
+		case left:
+		  printf("left\n");
+		  return true;
+		case right:
+		  printf("right\n");
+		  return true;
 		}
 		return false;
 	}
