@@ -8,6 +8,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>
+#include <map>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 class STDBrowser: public Browser, public InputListener {
 public:
@@ -32,6 +36,7 @@ public:
 	Card * _card;
 	InputStack * i;
 	Fill * thumbFill;
+	Image * thumb;
 	Fill * filesFill;
 	Fill * mark;
 	std::vector< DirEnt > dirlist; 
@@ -42,6 +47,27 @@ public:
 	float fs;
 	std::string dir;
 	DB * db;
+	std::map<std::string, std::string> art_map;
+
+	bool fileExists(const std::string & path) {
+		int f = open(path.c_str(), O_RDONLY);
+		return (f==-1)?false:(close(f),true);
+	}
+
+	std::string locateArt(std::string path) {
+		std::map<std::string, std::string>::iterator i = art_map.find(path);
+		std::string p=path;
+		if(i != art_map.end()) return i->second;
+		if(p[p.size()-1] == '/') p.append("folder.");
+		else {
+			size_t b = p.rfind(".");
+			if(b > p.rfind("/")) p.resize(b+1);
+		}
+		if(fileExists(p+"jpg")) return (art_map[path]=p+"jpg");
+		if(fileExists(p+"png")) return (art_map[path]=p+"png");
+		path.resize( path.rfind("/",path.size()-2)+1);
+		return (art_map[path]=locateArt(path));
+	}
 
 	void update() {
 		if(idx >= (int)dirlist.size()) idx=dirlist.size()-1;
@@ -54,11 +80,20 @@ public:
 		float s=0.06;
 		float sp=fs;
 		mark->move(0.06,0.06+sp*(idx-top));
+
+		std::string path=dir;
+		if(path[path.length()-1] != '/') path.push_back('/');
+		path.append(dirlist[idx].name);
+		if(dirlist[idx].dir) path.push_back('/');
+		thumb->change(locateArt(path).c_str());
+		
 		for(int i=top; i < std::min((int)dirlist.size(),top+visible); ++i) {
 			if(!dirlist[i].icon) dirlist[i].icon = _card->addImage(dirlist[i].dir?(char*)"folder.png":(char*)"media.png",2,Rect(0.055,s,0.06+0.045,s+0.045),true);
 			else dirlist[i].icon->move(0.055,s);
 			if(!dirlist[i].label) {
-				dirlist[i].label = _card->addLabel(dirlist[i].name.c_str(),2,0.1,s,fs);
+				std::string x = dirlist[i].name;
+				int b = x.rfind("."); if(b > 0) x.resize(b);
+				dirlist[i].label = _card->addLabel(x.c_str(),2,0.1,s,fs);
 				dirlist[i].label->setMaxWidth(0.56-0.1);
 			} else dirlist[i].label->move(0.1, s);
 			s += sp;
@@ -110,6 +145,7 @@ public:
 	}
 
 	STDBrowser(Stack * s, BrowserHook * h, DB * d): _stack(s), _hook(h), oldTop(0), db(d) {
+		art_map[""] = "";
 		_card = s->constructCard();
 		const char * k1[]={"browser",NULL};
 		const char * k2[]={"browser","directory",NULL};
@@ -126,6 +162,8 @@ public:
 			Color(20,20,255,200) , Color(20,20,255,100),
 			Color(20,20,255,50) , Color(20,20,255,100) );
 		thumbFill->setRadius(0.02);
+		
+		thumb = _card->addImage("",1, Rect(0.59, 0.07, 0.93, 0.93));
 		
 		mark = _card->addFill(Color(0,0,255),1,Rect(0.06, 0.06, 0.56, 0.07+fs));
 		mark->setRadius(0.02);

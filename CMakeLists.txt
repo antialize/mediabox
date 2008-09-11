@@ -6,7 +6,6 @@ find_package(SDL REQUIRED)
 find_package(SDL_image REQUIRED)
 find_package(SDL_ttf REQUIRED)
 find_package(MySQL)
-find_package(Cwiid)
 
 message(STATUS "CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}")
 
@@ -22,13 +21,6 @@ if(MYSQL_FOUND)
   set(lib ${lib} ${MYSQL_LIBRARY})
   ADD_DEFINITIONS(-D__HAVE_MYSQL__)
 endif(MYSQL_FOUND)
-
-if(CWIID_FOUND) 
-  include_directories(${CWIID_INCLUDE_DIR})
-  set(src ${src} wiimote.cc)
-  set(lib ${lib} ${CWIID_LIBRARY})
-  ADD_DEFINITIONS(-D__HAVE_CWIID__)
-endif(CWIID_FOUND)
 
 include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR} ${SDLTTF_INCLUDE_DIR})
 add_executable(mediabox ${src})

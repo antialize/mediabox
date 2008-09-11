@@ -773,6 +773,7 @@ void SDLImage::render(IRect& r) {
 }
 
 void SDLImage::change(const char * p) {
+	invalidate();
 	disassosiate();
 	path = (char *)p;
 	assosiate();
@@ -915,10 +916,11 @@ void SDLLabel::reload() {
 }
 
 void SDLLabel::render(IRect &r) {
-	uint32_t sx = (irect.w() - renderedText->w) / 2;
-	uint32_t sy = (irect.h() - renderedText->h) / 2;
 	SDL_Rect d = r;
-	SDL_Rect s = {r.l - irect.l-sx,r.t - irect.t-sy,r.w(),r.h()};
+	SDL_Rect s = {r.l-irect.l,
+				  r.t-irect.t,
+				  std::min(r.w(),renderedText->w-r.l+irect.l),
+				  std::min(r.h(),renderedText->h-r.t+irect.t)};
 	SDL_BlitSurface(renderedText, &s, stack->screen, &d);
 }
 
