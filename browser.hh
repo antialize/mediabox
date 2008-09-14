@@ -10,7 +10,7 @@ class Browser;
 class BrowserHook {
 public:
 	virtual const std::string name() = 0;
-	virtual void onExit(Browser * browser) {};
+	virtual void onExit(Browser * browser) {}
 	virtual bool include(const std::string & path) {return true;}
 	virtual void execute(const std::string & path) {}
 	virtual const std::string defaultDir() = 0;
@@ -23,7 +23,6 @@ public:
 	virtual Card * card() = 0;
 	virtual BrowserHook * hook() = 0;
 	virtual InputListener * listener() = 0;
-	virtual void run(InputStack * i) = 0;
 	virtual void changeDir(std::string c) = 0;
 	virtual ~Browser() {}
 };

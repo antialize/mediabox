@@ -8,7 +8,7 @@
 #include "config.hh"
 #include <string.h>
 using namespace std;
-
+-
 class MysqlDB: public DB {
 public:
 	MYSQL mysql;

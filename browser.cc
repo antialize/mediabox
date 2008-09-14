@@ -200,9 +200,6 @@ public:
 
 	bool onSpecialKey(int key) {
 		switch(key) {
-		case escape:
-			i->terminate();
-			return true;
 		case up:
 			_stack->lockLayout();
 			--idx;
@@ -260,23 +257,6 @@ public:
 		default:
 			return false;
 		}
-	}
-
-	bool onKey(int unicode) {
-		switch(unicode) {
-		case 'q':
-			i->terminate();
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	void run(InputStack * _) {
-		i=_;
-		i->pushListener(listener());
-		stack()->pushCard(card());
-		i->mainLoop();
 	}
 
 	~STDBrowser() {
