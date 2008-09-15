@@ -29,7 +29,7 @@ public:
 			return ext == "mpg" || ext == "avi" || ext == "xvid" || ext == "mpeg" || ext == "rm" || ext == "mkv"
 				|| ext == "wmv";
 		}
-		const std::string name() {return "video";}
+		const char * name() {return "video";}
 		virtual void execute(const std::string & path) {
 			int p = fork();
 			if(p == -1) DIE("fork");
@@ -39,7 +39,7 @@ public:
 				exit(2);
 			}
 		}
-		const std::string defaultDir() {return cfg()("video_root","/home/");}
+		const char * defaultDir() {return cfg()("video_root","/home/");}
 	};
 	
 	Hook hook;
@@ -60,8 +60,8 @@ public:
 
 	}
 
-	virtual string name() {return "Video";}
-	virtual string image() {return "";}
+	virtual const char * name() {return "Video";}
+	virtual const char * image() {return "video.jpg";}
 };
 
 Part * createVideoPart(Stack * s, InputStack * i, DB * d) {

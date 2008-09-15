@@ -116,7 +116,7 @@ public:
 		mplayer = fork();
 		if(mplayer == -1) DIE("fork");
 		if(mplayer == 0) { 
-			const char * argv[] = {"mplayer","-quiet","-slave","-fs","-zoom","-ontop",file,NULL};
+			const char * argv[] = {"mplayer","-quiet","-slave","-novideo",file,NULL};
 			dup2(inpipe[0],0);
 			dup2(outpipe[1],1);
 			execvp("mplayer", (char **)argv);

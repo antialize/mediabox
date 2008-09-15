@@ -201,6 +201,7 @@ public:
 	void setGradient(const Color & ul_, const Color & ur_, const Color & br_, const Color & bl_);
 	void setRadius(float _);
 	void render(IRect &r);
+	void resize(Rect & r) {SDLElement::resize(r); dirty=true;}
 	void rescale() {SDLElement::rescale(); dirty=true;}
 };
 
@@ -313,13 +314,13 @@ public:
 		atexit(SDL_Quit);
 		
 		screen = SDL_SetVideoMode(720, 576, 32,
-								  SDL_SWSURFACE | (cfg()("fullscreen",true)?SDL_FULLSCREEN | SDL_NOFRAME :SDL_RESIZABLE) );
+								  SDL_SWSURFACE | (cfg()("fullscreen",true)?SDL_FULLSCREEN | SDL_NOFRAME : SDL_RESIZABLE) );
 		if(cfg()("fullscreen",true)) SDL_ShowCursor(SDL_DISABLE);
 		SDLImage::start();
 	}
 
 	void lockLayout() {++lc;}
-	void unlockLayout() {--lc;if(lc==0)update();}
+	void unlockLayout() {--lc; if(lc==0)update();}
 	void pushCard(Card * c) {
 		stack.push_back(static_cast<SDLCard*>(c));
 		static_cast<SDLCard*>(c)->invalidate();
@@ -355,6 +356,17 @@ void SDLElement::remove() {
 uint32_t SDLElement::zindex() {return zidx;}
 void SDLElement::setzindex(uint32_t) {}
 
+
+void SDLElement::resize(Rect & r) {
+	if(_rect == r) return;
+	_rect = r;
+	IRect i = stack->irect(r);
+	if(i == irect) return;
+	invalidate();
+	irect = i;
+	invalidate();
+	stack->update();
+}
 void SDLElement::move(float x,float y) { 
 	if(_rect.l == x && 	_rect.t == y) return;
 	_rect.b += y - _rect.t;
@@ -369,7 +381,6 @@ void SDLElement::move(float x,float y) {
 	stack->update();
 }
 
-void SDLElement::resize(Rect &) {}
 
 void SDLElement::rescale() {irect = stack->irect(_rect);}
 

@@ -3,6 +3,7 @@
 #include "input.hh"
 #include "systemmenu.hh"
 #include "videopart.hh"
+#include "musicpart.hh"
 
 int main(int argc, char ** argv) {
 	Stack * stack = constructSDLStack();
@@ -19,13 +20,15 @@ int main(int argc, char ** argv) {
 	#endif
 	if(db == NULL) db = createMemoryDB();
 	
-	SystemMenu * menu = createSystemMenu(stack,input,db);
-	Part * videoPart = createVideoPart(stack,input,db);
+	SystemMenu * menu = createSystemMenu(stack, input, db);
+	Part * videoPart = createVideoPart(stack, input, db);
+	Part * musicPart = createMusicPart(stack, input, db);
+	menu->addPart( musicPart );
 	menu->addPart( videoPart );
-
 	menu->run();
 	delete menu;
 	delete videoPart;
+	delete musicPart;
 	delete input;
 	delete stack;
 	delete db;

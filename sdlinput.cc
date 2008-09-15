@@ -49,14 +49,25 @@ public:
 				if( (*i)->onExpose() ) break;
 			break;
 		case SDL_USEREVENT:
-			if(event.user.code == 42)
+			if(event.user.code == 42) {
 				for(ll::iterator i=ls.begin(); i != ls.end(); ++i)
 					if( (*i)->onUpdate() ) break;
-			break;
+			} else {
+				for(ll::iterator i=ls.begin(); i != ls.end(); ++i)
+					if( (*i)->onUser(event.user.code, event.user.data1) ) break;
+			}
 		}
 		return !dead;
 	}
 
+	void triggerUser(int code, void * data) {
+		SDL_Event event;
+		event.type = SDL_USEREVENT;
+		event.user.code = code;
+		event.user.data1 = data;
+		SDL_PushEvent(&event);
+	}
+	
 	void triggerSpecialKey(int key) {
 		for(ll::iterator i=ls.begin(); i != ls.end(); ++i)
 			if( (*i)->onSpecialKey(key) ) break;

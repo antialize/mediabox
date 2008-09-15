@@ -9,11 +9,11 @@ class Browser;
 
 class BrowserHook {
 public:
-	virtual const std::string name() = 0;
+	virtual const char * name() = 0;
 	virtual void onExit(Browser * browser) {}
 	virtual bool include(const std::string & path) {return true;}
 	virtual void execute(const std::string & path) {}
-	virtual const std::string defaultDir() = 0;
+	virtual const char * defaultDir() = 0;
 	virtual ~BrowserHook() {};
 };
 

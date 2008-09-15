@@ -10,8 +10,8 @@ public:
 	virtual void push() = 0;
 	virtual void pop()  = 0;
 	virtual ~Part() {};
-	virtual std::string name()  = 0;
-	virtual std::string image() = 0;
+	virtual const char * name()  = 0;
+	virtual const char * image() = 0;
 };
 
 class SystemMenu {

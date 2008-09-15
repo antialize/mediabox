@@ -19,6 +19,7 @@ public:
 	virtual bool onResize(int w, int h) {return false;}
 	virtual bool onExpose() {return false;}
 	virtual bool onUpdate() {return false;}
+	virtual bool onUser(int code, void * data) {return false;}
 	virtual ~InputListener() {}
 };
 
@@ -40,6 +41,7 @@ public:
 	
 	virtual void triggerSpecialKey(int key) = 0;
 	virtual void triggerKey(int unicode) = 0;
+	virtual void triggerUser(int code, void * data) = 0;
 };
 
 InputStack * createSDLInputStack();
