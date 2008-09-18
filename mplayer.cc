@@ -19,15 +19,21 @@ private:
 	int out;
 	Mutex m;
 	volatile float length;
+	volatile float volume;
 	volatile float pos;
 	Cond length_cond;
+	Cond volume_cond;
 	Cond pos_cond;
 	pthread_t rt;
-	template <typename T> T get(const char * cmd,Cond & cond,volatile T & elm) {
+	volatile bool running_;
+	PlayerHook * hook;
+
+	template <typename T> T get(const char * cmd,Cond & cond,volatile T & elm, bool ur=false) {
 		T tmp;
 		m.lock();
 		write(in,cmd,strlen(cmd));
-		cond.wait(m);
+		bool x = !cond.wait(m,0.5);
+		if(ur) running_ = x;
 		tmp = elm;
 		m.unlock();
 		return tmp;
@@ -63,13 +69,12 @@ private:
 			for(; s < e; ++s) {
 				if(buf[s] != '\n') continue;
 				buf[s] = '\0';
-
-				if(readVar(buf+a,"ANS_LENGTH=%f",length,length_cond));
+				if(s == 0) {if(hook) hook->onFinish();}
+				else if(readVar(buf+a,"ANS_LENGTH=%f",length,length_cond));
 				else if(readVar(buf+a,"ANS_TIME_POSITION=%f",pos,pos_cond));
 				else {
 					printf("MPlayer: %s\n",buf+a);
 				}
-				
 				a = s+1;
 			}
 			for(s=0; s < e-a; ++s) buf[s]=buf[a+s];
@@ -77,6 +82,7 @@ private:
 			a=0;
 		}
 	}
+
 	static void * readThread(void * _self) {
 		static_cast<MPlayer*>(_self)->realReadThread();
 		return NULL;
@@ -84,15 +90,9 @@ private:
 
 
 public:
-	MPlayer() {mplayer=in=out=-1;}
-	~MPlayer() {stop();}
-	void setVolume(float volume) {set("volume %f 1\n",volume);}
-	void setPause(bool pause) {set("pause %d\n",pause?1:0);}
-	float getLength() {return get<float>("get_time_length\n",length_cond,length);}
-	float getPos() {return get<float>("get_time_pos\n",pos_cond,pos);}
-	void setPos(float p) {set("seek %f 2\n",p);}
-	void setMute(bool mute) {set("mute %d\n",mute?1:0);}
-	void stop() {
+	MPlayer(PlayerHook * h=NULL) {mplayer=in=out=-1;hook=h;}
+	void setHook(PlayerHook * h) {hook=h;}
+	~MPlayer() {
 		if(mplayer == -1) return;
 		set("quit\n");
 		if(in) {close(in); in=0;}
@@ -100,6 +100,19 @@ public:
 		waitpid(mplayer,NULL,0); 
 		mplayer = -1;
 	}
+	void setVolume(float volume) {set("volume %f 1\n",volume);}
+	void decVolume() {set("volume -10\n");}
+	void incVolume() {set("volume +10\n");}
+
+	void setPause(bool pause) {set("pause %d\n",pause?1:0);}
+	float getLength() {return get<float>("get_time_length\n",length_cond,length,false);}
+	float getPos() {return get<float>("get_time_pos\n",pos_cond,pos,true);}
+	void setPos(float p) {set("seek %f 2\n",p);}
+	void setMute(bool mute) {set("mute %d\n",mute?1:0);}
+	void stop() {set("stop\n");}
+	
+	bool running() {return running_;}
+
 	void wait() {
 		if(mplayer == -1) return;
 		waitpid(mplayer,NULL,0); 
@@ -111,12 +124,17 @@ public:
 	void play(const char * file) {
 		int inpipe[2];
 		int outpipe[2];
+		if(mplayer != -1) {
+			set("stop\n");
+			set("loadfile \"%s\"",file);
+			return;
+		}
 		if(pipe(inpipe) == -1) DIE("pipe");
 		if(pipe(outpipe) == -1) DIE("pipe");
 		mplayer = fork();
 		if(mplayer == -1) DIE("fork");
 		if(mplayer == 0) { 
-			const char * argv[] = {"mplayer","-quiet","-slave","-novideo",file,NULL};
+			const char * argv[] = {"mplayer","-quiet","-slave","-novideo","-idle",file,NULL};
 			dup2(inpipe[0],0);
 			dup2(outpipe[1],1);
 			execvp("mplayer", (char **)argv);
@@ -144,6 +162,6 @@ public:
 	}
 };
 
-Player * constructMPlayer() {
-	return new MPlayer();
+Player * constructMPlayer(PlayerHook * hook) {
+	return new MPlayer(hook);
 }

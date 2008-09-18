@@ -17,7 +17,7 @@ public:
 	InputStack * input;
 	DB * db;
 	vector<Part*> parts;
-	
+	Fill * marker;
 	void addPart(Part * p) {parts.push_back(p);}
 	MySystemMenu(Stack *s, InputStack * i, DB * d): stack(s), input(i), db(d) {};
 	
@@ -30,7 +30,9 @@ public:
 	Fill * killSwitch;
 	bool killSwitchOn;
 
-	
+	int part;
+	int oldpart;
+
 	bool onSpecialKey(int key) {
 		switch(state) {
 		case showing_killMenu:
@@ -44,7 +46,7 @@ public:
 				stack->popCard();
 				input->popListener();
 				stack->unlockLayout();
-				state = showing_part;
+				state = showing_partsMenu;
 				return true;
 			case left:
 			case right:
@@ -63,6 +65,51 @@ public:
 			}
 		case showing_partsMenu:
 			switch(key) {
+			case enter:
+				if(part == parts.size()) {
+					stack->lockLayout();
+					stack->pushCard(killMenu);
+					input->pushListener(this);
+					killSwitchOn = true;
+					killSwitch->move(0.32, 0.53);
+					stack->unlockLayout();
+					state = showing_killMenu;
+				} else {
+					stack->lockLayout();
+					stack->popCard();
+					input->popListener();
+					state = showing_part;
+					if(part != oldpart) {
+						parts[oldpart]->pop();
+						parts[part]->push();
+						oldpart=part;
+					}
+					stack->unlockLayout();
+				}
+				return true;
+			case left:
+			case up:
+				--part;
+				if(part < 0) part =0;
+				stack->lockLayout();
+				marker->move(0.25,0.245+0.07*part);
+				stack->unlockLayout();
+				return true;
+			case right:
+			case down:
+				++part;
+				if(part > parts.size()) part = parts.size();
+				stack->lockLayout();
+				marker->move(0.25,0.245+0.07*part);
+				stack->unlockLayout();
+				return true;
+			case escape:
+				stack->lockLayout();
+				stack->popCard();
+				input->popListener();
+				stack->unlockLayout();
+				state = showing_part;
+				return true;
 			default:
 				return true;
 			}
@@ -70,12 +117,10 @@ public:
 			switch(key) {
 			case escape:
 				stack->lockLayout();
-				stack->pushCard(killMenu);
+				stack->pushCard(partsMenu);
 				input->pushListener(this);
-				killSwitchOn = true;
-				killSwitch->move(0.32, 0.53);
 				stack->unlockLayout();
-				state = showing_killMenu;
+				state = showing_partsMenu;
 				return true;
 			default:
 				return false;
@@ -86,9 +131,35 @@ public:
 	}
 
 	void run() {
+		part = 0;
+		oldpart = 0;
 		bg = stack->constructCard();
 		bg->addImage(cfg()("background","stOrmblue-scaled.jpg"),0,Rect(0,0,1,1),false);
+
+		partsMenu = stack->constructCard();
+		Fill * f2 = partsMenu->addFill( Color(255,0,0), 0 , 
+									  Rect(0.2, 0.2, 0.8, 0.8) );
+		f2->setGradient( 
+			Color(0,0,190,255),
+			Color(0,0,170,230),
+			Color(0,0,170,230),
+			Color(0,0,150,210) );
+		f2->setRadius(0.02);
 		
+		marker = partsMenu->addFill( Color(255,0,0), 1 ,
+									 Rect(0.25, 0.245, 0.75, 0.245 + 0.07 ) );
+		
+		marker->setGradient( 
+			Color(190,0,0,255),
+			Color(170,0,0,230),
+			Color(170,0,0,230),
+			Color(150,0,0,210) );
+		marker->setRadius(0.02);
+		
+		for(int i=0; i < parts.size(); ++i)
+			partsMenu->addLabel( parts[i]->name() , 2 , 0.3, 0.25 + 0.07*i, 0.06);
+		partsMenu->addLabel( "Shutdown" , 2 , 0.3, 0.25 + 0.07*(parts.size()), 0.06);
+
 		killMenu = stack->constructCard();
 		Fill * f = killMenu->addFill( Color(255,0,0), 0 , 
 									  Rect(0.2, 0.35, 0.8, 0.65) );
@@ -116,7 +187,6 @@ public:
 		stack->unlockLayout();
 		
 		state = showing_part;
-		
 		parts.front()->push();
 		input->mainLoop();
 	};

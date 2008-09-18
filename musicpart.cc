@@ -21,7 +21,7 @@ string trim(string x) {
 	return x;
 }
 
-class MusicPart: public Part, InputListener {
+class MusicPart: public Part, InputListener, PlayerHook {
 public:
 	Stack * stack;
 	InputStack * input;
@@ -38,7 +38,9 @@ public:
 	Player * player;
 	Fill * progressBase;
 	Fill * progressBar;
-
+	bool stopped;
+	int cnt;
+	
 	class ListListHook: public ListBoxHook {
 	public:
 		MusicPart * mp;
@@ -100,14 +102,22 @@ public:
 		virtual const char * icon(size_t i) {return "media.png";}
 	};
 
+	virtual void onFinish() {
+		if(cnt < 5) return;
+		if(!stopped) play( (playing+1) % lhook.pls.size() );
+	}
+	
 	ListListHook llhook;
 	ListHook lhook;
 
 	void play(int n) {
 		char buff[2048];
-		player->stop();
+		//player->stop();
+		cnt = 0;
+		playing = n;
 		sprintf(buff, "%s/%s", cfg()("music_root","~/Music"), lhook.pls[n].c_str());
 		player->play(buff);
+		//player->setVolume(.2);
 	}
 
 
@@ -184,6 +194,8 @@ public:
 
 	MusicPart(Stack * s, InputStack * i, DB * d)
 		: stack(s), input(i), db(d), rightHasFocus(false), llhook(this), lhook(this), pt(this), wt(this) {
+		stopped = false;
+
 		card = stack->constructCard();
 		createBox( Rect(0.06, 0.06, 0.94, 0.23 ) );
 		listList = createListBox(&llhook, card, 0, Rect(0.06, 0.24, 0.40, 0.86 ), 15 );
@@ -210,7 +222,7 @@ public:
 		db->describeTabel("music_playlist",k1,v1);
 		db->describeTabel("music_playlist_index",k2,v2);
 
-		player = constructMPlayer();
+		player = constructMPlayer(this);
 
 		const char * k[] = {NULL};
 		char buff[1024];
@@ -227,25 +239,39 @@ public:
 	}
 
 	virtual void push() {
+		stopped = false;
 		stack->pushCard(card);
 		input->pushListener(this);
 	}
 
 	virtual void pop() {
+		stopped=true;
+		player->stop();
 		stack->popCard();
 		input->popListener();
 	}
 
    	bool onUser(int code, void * data) {
 		if(code != 1) return false;
+		++cnt;
+		if(cnt > 0x00FFFFFF) cnt=0x00FFFFFF;
 		stack->lockLayout();
 		Rect r = progressBase->rect();
-		double x = player->getLength();
 		double y =  player->getPos();
+		double x = player->getLength();
 		if(x != 0) x = y / x;
+		if(x > 1) x = 1;
 		Rect r2 = Rect(r.l, r.t, r.l + (r.r-r.l)*x, r.b);
-		progressBar->resize(r2);					
+		progressBar->resize(r2);
 		stack->unlockLayout();
+		if(!player->running()) onFinish();
+		return true;
+	}
+
+	bool onKey(int key) {
+		if(key == '9') player->decVolume();
+		else if(key == '0') player->incVolume();
+		else return false;
 		return true;
 	}
 
@@ -302,6 +328,7 @@ public:
 	virtual const char * image() {return "music.jpg";}
 	
 	~MusicPart() {
+		stopped=true;
 		player->stop();
 		delete player;
 	}

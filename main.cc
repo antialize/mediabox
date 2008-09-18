@@ -23,8 +23,8 @@ int main(int argc, char ** argv) {
 	SystemMenu * menu = createSystemMenu(stack, input, db);
 	Part * videoPart = createVideoPart(stack, input, db);
 	Part * musicPart = createMusicPart(stack, input, db);
-	menu->addPart( musicPart );
 	menu->addPart( videoPart );
+	menu->addPart( musicPart );
 	menu->run();
 	delete menu;
 	delete videoPart;

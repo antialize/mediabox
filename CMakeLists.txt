@@ -8,6 +8,7 @@ find_package(SDL_ttf REQUIRED)
 find_package(MySQL)
 
 
+
 message(STATUS "CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}")
 
 set(CMAKE_CXX_FLAGS "-Wall -ggdb")
@@ -25,7 +26,7 @@ endif(MYSQL_FOUND)
 
 include_directories(${SDL_INCLUDE_DIR} ${SDLIMAGE_INCLUDE_DIR} ${SDLTTF_INCLUDE_DIR})
 add_executable(mediabox ${src})
-target_link_libraries(mediabox  ${lib})
+target_link_libraries(mediabox  ${lib} -lrt)
 
 install(PROGRAMS mediabox DESTINATION bin)
 install(FILES folder.png media.png stOrmblue-scaled.jpg  DESTINATION share/mediabox)

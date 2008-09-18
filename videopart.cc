@@ -57,7 +57,8 @@ public:
 	}
 
 	virtual void pop() {
-
+		browser->stack()->popCard();
+		input->popListener();
 	}
 
 	virtual const char * name() {return "Video";}
