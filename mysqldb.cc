@@ -66,13 +66,14 @@ public:
 	void update(const char * tbl, const char ** keys, const char ** values) {
 		ostringstream s1;
 		ostringstream s2;
-		s1 << "DELETE FROM `" << tbl << "` WHERE ";
+		s1 << "DELETE FROM `" << tbl << "` WHERE 1=1";
 		s2 << "INSERT INTO `" << tbl << "` SET ";
 		bool first=true;
 		for(vector<string>::iterator i= dbdesc[tbl].first.begin();
 			i != dbdesc[tbl].first.end(); ++i, ++keys) {
 			if(first) first=false;
-			else {s1 << " AND "; s2 << ", ";}
+			else {s2 << ", ";}
+			s1 << " AND ";
 			char buff[1024];
 			mysql_real_escape_string(&mysql, buff, *keys, strlen(*keys));
 			s1 << "`" << *i << "`='" << buff << "'";
@@ -98,16 +99,14 @@ public:
 		bool first=true;
 		for(vector<string>::iterator i= dbdesc[tbl].second.begin();
 			i != dbdesc[tbl].second.end(); ++i) {
-			if(first) first=true;
+			if(first) first=false;
 			else s << ", ";
 			s << "`" << *i << "`";
 		}			
-		s << " FROM `" << tbl << "` WHERE ";
-		first=true;
+		s << " FROM `" << tbl << "` WHERE 1=1";
 		for(vector<string>::iterator i= dbdesc[tbl].first.begin();
 			i != dbdesc[tbl].first.end(); ++i, ++keys) {
-			if(first) first=false;
-			else s << " AND ";
+			s << " AND ";
 			char buff[1024];
 			mysql_real_escape_string(&mysql, buff, *keys, strlen(*keys));
 			s << "`" << *i << "`='" << buff << "'";

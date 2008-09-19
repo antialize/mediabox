@@ -110,16 +110,14 @@ public:
 	ListListHook llhook;
 	ListHook lhook;
 
-	void play(int n) {
+	void play(size_t n) {
+		if(n >= lhook.pls.size()) return;
 		char buff[2048];
-		//player->stop();
 		cnt = 0;
 		playing = n;
 		sprintf(buff, "%s/%s", cfg()("music_root","~/Music"), lhook.pls[n].c_str());
 		player->play(buff);
-		//player->setVolume(.2);
 	}
-
 
 	Fill * createBox(const Rect & r) {
 		Fill * f = card->addFill(Color(0,0,0), 0, r);
@@ -144,7 +142,7 @@ public:
 	void setLLIndex(int idx,bool update) {
 		listList->setIndex(idx, update);
 		idx = listList->getIndex();
-
+		if(idx >= (int)llhook.pls.size()) return;
 		const char * k[] = {NULL};
 		char buff[1024];
 		sprintf(buff,"%d",idx);
@@ -165,7 +163,7 @@ public:
 		const char * k2[]={llhook.pls[idx].c_str(),NULL};
 		char * v2[]={buff,buff2,NULL};
 		if(db->fetch("music_playlist_index", k2, v2)) {
-			for(int _=0; _ < lhook.size(); ++_) {
+			for(size_t _=0; _ < lhook.size(); ++_) {
 				if(lhook.pls[_] == buff) playing=_;
 				if(lhook.pls[_] == buff2) i=_;
 			}
@@ -178,22 +176,13 @@ public:
 	public:
 		MusicPart * mp;
 		ProgressThread(MusicPart * m): mp(m) {}
-		void run() {while(true) {mp->input->triggerUser(1, NULL);sleep(1);}};
+		void run() {while(!mp->stopped) {mp->input->triggerUser(1, NULL);usleep(500000);}};
 	};
 
 	ProgressThread pt;
-   
-	class WaitThread: public Thread<WaitThread> {
-	public:
-		MusicPart * mp;
-		WaitThread(MusicPart * m): mp(m) {}
-		void run() {while(true) {mp->player->wait();}};
-	};
-
-	WaitThread wt;
-
+ 
 	MusicPart(Stack * s, InputStack * i, DB * d)
-		: stack(s), input(i), db(d), rightHasFocus(false), llhook(this), lhook(this), pt(this), wt(this) {
+		: stack(s), input(i), db(d), rightHasFocus(false), llhook(this), lhook(this), pt(this) {
 		stopped = false;
 
 		card = stack->constructCard();
@@ -229,19 +218,19 @@ public:
 		char * v[] = {buff, NULL};
 		int idx=0;
 		if(db->fetch("music_playlist", k, v))
-			for(int i=0; i < llhook.size(); ++i)
+			for(size_t i=0; i < llhook.size(); ++i)
 				if(llhook.pls[i] == buff) idx=i;
 		setLLIndex(idx, true);
 		rightHasFocus=true;
 		listList->setFocus(false);
-		play(playing);
-		pt.start();
 	}
 
 	virtual void push() {
 		stopped = false;
 		stack->pushCard(card);
 		input->pushListener(this);
+		play(playing);
+		pt.start();
 	}
 
 	virtual void pop() {
@@ -295,6 +284,7 @@ public:
 				listList->setFocus(false);
 				list->setFocus(true);
 				stack->unlockLayout();
+				return true;
 			}
 		} else {
 			switch(key) {
@@ -320,8 +310,8 @@ public:
 				play( list->getIndex() );
 				return true;
 			}
-
 		}
+		return false;
 	}
 
 	virtual const char * name() {return "Music";}

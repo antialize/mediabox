@@ -19,7 +19,11 @@ public:
 	vector<Part*> parts;
 	Fill * marker;
 	void addPart(Part * p) {parts.push_back(p);}
-	MySystemMenu(Stack *s, InputStack * i, DB * d): stack(s), input(i), db(d) {};
+	MySystemMenu(Stack *s, InputStack * i, DB * d): stack(s), input(i), db(d) {
+		const char * k[]={NULL};
+		const char * v[]={"part",NULL};
+		db->describeTabel("part",k,v);
+	};
 	
 	Card * bg;
 
@@ -66,7 +70,7 @@ public:
 		case showing_partsMenu:
 			switch(key) {
 			case enter:
-				if(part == parts.size()) {
+				if((size_t)part == parts.size()) {
 					stack->lockLayout();
 					stack->pushCard(killMenu);
 					input->pushListener(this);
@@ -83,6 +87,10 @@ public:
 						parts[oldpart]->pop();
 						parts[part]->push();
 						oldpart=part;
+
+						const char * k[]={NULL};
+						const char * v[]={parts[part]->name(),NULL};
+						db->update("part",k,v);
 					}
 					stack->unlockLayout();
 				}
@@ -98,7 +106,7 @@ public:
 			case right:
 			case down:
 				++part;
-				if(part > parts.size()) part = parts.size();
+				if((size_t)part > parts.size()) part = parts.size();
 				stack->lockLayout();
 				marker->move(0.25,0.245+0.07*part);
 				stack->unlockLayout();
@@ -131,8 +139,16 @@ public:
 	}
 
 	void run() {
-		part = 0;
 		oldpart = 0;
+		char buff[1234];
+		const char * k[]={NULL};
+		char * v[]={buff,NULL};
+		if(db->fetch("part",k,v)) {
+			for(size_t i=0; i < parts.size(); ++i)
+				if(!strcmp(parts[i]->name(),buff)) oldpart=i;
+		}
+		part = oldpart;
+
 		bg = stack->constructCard();
 		bg->addImage(cfg()("background","stOrmblue-scaled.jpg"),0,Rect(0,0,1,1),false);
 
@@ -155,8 +171,9 @@ public:
 			Color(170,0,0,230),
 			Color(150,0,0,210) );
 		marker->setRadius(0.02);
+		marker->move(0.25,0.245+0.07*part);
 		
-		for(int i=0; i < parts.size(); ++i)
+		for(size_t i=0; i < parts.size(); ++i)
 			partsMenu->addLabel( parts[i]->name() , 2 , 0.3, 0.25 + 0.07*i, 0.06);
 		partsMenu->addLabel( "Shutdown" , 2 , 0.3, 0.25 + 0.07*(parts.size()), 0.06);
 
@@ -187,7 +204,7 @@ public:
 		stack->unlockLayout();
 		
 		state = showing_part;
-		parts.front()->push();
+		parts[part]->push();
 		input->mainLoop();
 	};
 };
