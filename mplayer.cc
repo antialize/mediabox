@@ -134,7 +134,7 @@ public:
 		mplayer = fork();
 		if(mplayer == -1) DIE("fork");
 		if(mplayer == 0) { 
-			const char * argv[] = {"mplayer","-quiet","-slave","-novideo","-idle",file,NULL};
+			const char * argv[] = {"mplayer","-quiet","-slave","-novideo","-idle","-cache","51200","-cache-min","1",file,NULL};
 			dup2(inpipe[0],0);
 			dup2(outpipe[1],1);
 			execvp("mplayer", (char **)argv);

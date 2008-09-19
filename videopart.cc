@@ -34,7 +34,7 @@ public:
 			int p = fork();
 			if(p == -1) DIE("fork");
 			if(p == 0) {
-				const char * argv[] = {"mplayer", "-fs", "-zoom", path.c_str(), NULL};
+				const char * argv[] = {"mplayer", "-fs", "-zoom", "-cache","51200", "-cache-min","1", path.c_str(), NULL};
 				execvp("mplayer", (char **)argv);
 				exit(2);
 			}
