@@ -931,14 +931,15 @@ void SDLLabel::reload() {
 	renderedText = SDL_DisplayFormatAlpha(s);
 	if(renderedText == NULL) SDLERR("SDL_DisplayFormatAlpha");
 	SDL_FreeSurface(s);
-	_rect.r = _rect.l + std::min((float)renderedText->w/(float)stack->screen->w,mw);
+	Rect r = _rect;
+	r.r = r.l + std::min((float)renderedText->w/(float)stack->screen->w,mw);
 	if(c) {
-		float x = mw - (_rect.r - _rect.l);  
-		_rect.r += x/4;
-		_rect.l += x/4;
+		float x = mw - (r.r - r.l);  
+		r.r += x/2;
+		r.l += x/2;
 	}
-	_rect.b = _rect.t + (float)renderedText->h/(float)stack->screen->h;
-	irect = stack->irect(_rect);
+	r.b = r.t + (float)renderedText->h/(float)stack->screen->h;
+	irect = stack->irect(r);
 	invalidate();
 	stack->update();
 }

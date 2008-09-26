@@ -36,7 +36,7 @@ public:
 
 	int part;
 	int oldpart;
-	
+	int parts_pitch;
 	vector<pair<float,float> > l;
 	
 	bool onSpecialKey(int key) {
@@ -98,16 +98,28 @@ public:
 				}
 				return true;
 			case left:
-			case up:
 				--part;
 				if(part < 0) part =0;
 				stack->lockLayout();
 				marker->move(l[part].first, l[part].second);
 				stack->unlockLayout();
 				return true;
+			case up:
+				part -= parts_pitch;
+				if(part < 0) part =0;
+				stack->lockLayout();
+				marker->move(l[part].first, l[part].second);
+				stack->unlockLayout();
+				return true;
 			case right:
-			case down:
 				++part;
+				if((size_t)part > parts.size()) part = parts.size();
+				stack->lockLayout();
+				marker->move(l[part].first, l[part].second);
+				stack->unlockLayout();
+				return true;
+			case down:
+				part += parts_pitch;
 				if((size_t)part > parts.size()) part = parts.size();
 				stack->lockLayout();
 				marker->move(l[part].first, l[part].second);
@@ -173,12 +185,12 @@ public:
 	good:
 		double dx = (0.8-0.3)/x;
 		double dy = (0.8-0.3)/x;
-
+		parts_pitch = x;
+		
 		for(int j=0; j < y; ++j) 
 			for(int i=0; i < x; ++i) 
 				l.push_back( make_pair(i*dx+0.25, j*dy+0.25) );
-
-			
+				
 		for(size_t i=0; i < parts.size(); ++i) {
 			partsMenu->addImage( parts[i]->image() , 2 , Rect(l[i].first+0.015,l[i].second+0.015,l[i].first+dx-0.03,l[i].second+dy-0.015-0.06) );
 			Label * la = partsMenu->addLabel( parts[i]->name() , 2 , l[i].first, l[i].second + dy - 0.07, 0.06);
@@ -190,9 +202,8 @@ public:
 		Label * la = partsMenu->addLabel( "Shutdown" , 2 , l[i].first, l[i].second + dy - 0.07, 0.06);
 		la->center();
 		la->setMaxWidth(dx);
-			
 		marker = partsMenu->addFill( Color(255,0,0), 1 ,
-									 Rect(l[0].first, l[0].second, l[0].first + dx, l[0].second + dy ) );
+									 Rect(l[part].first, l[part].second, l[part].first + dx, l[part].second + dy ) );
 		
 		marker->setGradient( 
 			Color(190,0,0,255),
@@ -200,7 +211,6 @@ public:
 			Color(170,0,0,230),
 			Color(150,0,0,210) );
 		marker->setRadius(0.02);
-		marker->move(0.25,0.245+0.07*part);
 
 		
 		killMenu = stack->constructCard();
