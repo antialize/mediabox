@@ -79,6 +79,12 @@ public:
 	int getIndex() {return idx;}
 	size_t lines() {return lines_;}
 
+	void renew(size_t i) {
+		if(entries.count(i) == 0) return;
+		entries[i].label->setValue(hook->name(i));
+		entries[i].icon->change(hook->icon(i));
+	}
+
 	void setIndex(int x, bool update) {
 		idx=x;
 		if(update) {size=hook->size(); removeUnmarked();}
@@ -95,12 +101,12 @@ public:
 		for(int i=top; i < min((int)size, (int)(top+lines_)); ++i) {
 			if(entries.count(i) == 0) {
 				entries[i] = Entry(
-					card->addImage(hook->icon(i), z+2, Rect(rect.l+0.005,s,rect.l+0.015+fs,s+fs+0.01),true),
+					card->addImage(hook->icon(i), z+2, Rect(rect.l+0.005,s+0.005,rect.l+0.015+fs,s+fs+0.005),true),
 					card->addLabel(hook->name(i), z+2, rect.l+0.015+fs  , s, fs)
 					);
 				entries[i].label->setMaxWidth(rect.w()-fs-0.015);
 			} else {
-				entries[i].icon->move(rect.l+0.005,s);
+				entries[i].icon->move(rect.l+0.005,s+0.005);
 				entries[i].label->move(rect.l+0.015+fs, s);
 			}
 			entries[i].mark=true;

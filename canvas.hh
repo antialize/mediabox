@@ -55,6 +55,7 @@ public:
 	virtual void setColor(const Color & c) = 0;
 	virtual void setFont(const char * font) = 0;
 	virtual void setMaxWidth(float w=0.0) = 0;
+	virtual void center() = 0;
 };
 
 class Card {

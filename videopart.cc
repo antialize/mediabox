@@ -62,7 +62,7 @@ public:
 	}
 
 	virtual const char * name() {return "Video";}
-	virtual const char * image() {return "video.jpg";}
+	virtual const char * image() {return "video.png";}
 };
 
 Part * createVideoPart(Stack * s, InputStack * i, DB * d) {

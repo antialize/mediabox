@@ -18,6 +18,10 @@
 #include <fcntl.h>
 #include "config.hh"
 
+
+#define DIE(format, args...) {fprintf(stderr, format, ##args); exit(1);}
+#define SDLERR(text) DIE("SDL failure at %s line %d: %s\n",__FILE__,__LINE__,SDL_GetError()) 
+
 class SDLElement;
 class SDLImage;
 class SDLLabel;
@@ -211,11 +215,13 @@ public:
 	uint32_t fontHeight;
 	const char * fontName;
 	float size;
-	const char * text;
 	float mw;
 	TTF_Font * font;
 	SDL_Surface * renderedText;
 	Color color;
+	bool c;
+	void center() {c = true;}
+	std::string text;
 	SDLLabel(SDLStack * s, SDLCard * c, uint32_t z, float x, float y, const char * v, float si);
 	void reload();
 	void render(IRect &r);
@@ -323,6 +329,7 @@ public:
 	void unlockLayout() {--lc; if(lc==0)update();}
 	void pushCard(Card * c) {
 		stack.push_back(static_cast<SDLCard*>(c));
+		static_cast<SDLCard*>(c)->rescale();
 		static_cast<SDLCard*>(c)->invalidate();
 		update();
 	}
@@ -887,6 +894,7 @@ SDLLabel::SDLLabel(SDLStack * stack, SDLCard * card, uint32_t z, float x, float 
 		printf("TTF_Init: %s\n", TTF_GetError());
 		exit(1);
 	}
+	c = false;
 	reload();
 }
 
@@ -914,13 +922,21 @@ void SDLLabel::reload() {
 		}
 	}
 	font = fontCache[make_pair(fontName, fontHeight)];
-	if(!font) return; 
-	SDL_Color c = {0,0,0};
-	SDL_Surface * s = TTF_RenderUTF8_Solid(font, text, c);
+	if(!font) return;
+	if(text.size() == 0) return;
+	
+	SDL_Color co = {0,0,0};
+	SDL_Surface * s = TTF_RenderUTF8_Solid(font, text.c_str(), co);
+	if(s == NULL) SDLERR("TTF_RenderUTF8_Solid");
 	renderedText = SDL_DisplayFormatAlpha(s);
+	if(renderedText == NULL) SDLERR("SDL_DisplayFormatAlpha");
 	SDL_FreeSurface(s);
-
 	_rect.r = _rect.l + std::min((float)renderedText->w/(float)stack->screen->w,mw);
+	if(c) {
+		float x = mw - (_rect.r - _rect.l);  
+		_rect.r += x/4;
+		_rect.l += x/4;
+	}
 	_rect.b = _rect.t + (float)renderedText->h/(float)stack->screen->h;
 	irect = stack->irect(_rect);
 	invalidate();
@@ -929,11 +945,20 @@ void SDLLabel::reload() {
 
 void SDLLabel::render(IRect &r) {
 	SDL_Rect d = r;
-	SDL_Rect s = {r.l-irect.l,
-				  r.t-irect.t,
-				  std::min(r.w(),renderedText->w-r.l+irect.l),
-				  std::min(r.h(),renderedText->h-r.t+irect.t)};
-	SDL_BlitSurface(renderedText, &s, stack->screen, &d);
+	SDL_Rect s;
+	if(c) {
+		uint32_t sx = (irect.w() - renderedText->w) / 2;
+		uint32_t sy = (irect.h() - renderedText->h) / 2;
+		SDL_Rect s1 = {r.l - irect.l-sx,r.t - irect.t-sy,r.w(),r.h()};
+		s=s1;
+	} else {
+		SDL_Rect s2 = {r.l-irect.l,
+			 r.t-irect.t,
+			 std::min(r.w(),renderedText->w-r.l+irect.l),
+			 std::min(r.h(),renderedText->h-r.t+irect.t)};
+		s=s2;
+	}
+	if(renderedText) SDL_BlitSurface(renderedText, &s, stack->screen, &d);
 }
 
 void SDLLabel::setValue(const char * t) {text=t;reload();}

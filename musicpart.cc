@@ -40,7 +40,12 @@ public:
 	Fill * progressBar;
 	bool stopped;
 	int cnt;
-	
+	Fill * black;
+	int blackness;
+	int b_s;
+	int b_d;
+	int b_m;
+
 	class ListListHook: public ListBoxHook {
 	public:
 		MusicPart * mp;
@@ -223,6 +228,12 @@ public:
 		setLLIndex(idx, true);
 		rightHasFocus=true;
 		listList->setFocus(false);
+
+		b_s = 60*2;
+		b_d = 20*2;
+		b_m = 200;
+		blackness = 0;
+		black = card->addFill(Color(0,0,0,0) , 10, Rect(0,0,1,1) );
 	}
 
 	virtual void push() {
@@ -245,6 +256,14 @@ public:
 		++cnt;
 		if(cnt > 0x00FFFFFF) cnt=0x00FFFFFF;
 		stack->lockLayout();
+		blackness++;
+		if(blackness > b_s) {
+			int co = min( ((blackness-b_s-1)*b_m) / b_d, b_m );
+			int c = min( ((blackness-b_s)*b_m) / b_d, b_m );
+			if( c != co ) black->setColor( Color(0,0,0,c) );
+			else blackness--;
+		} 
+
 		Rect r = progressBase->rect();
 		double y =  player->getPos();
 		double x = player->getLength();
@@ -257,65 +276,74 @@ public:
 		return true;
 	}
 
+	void next() {};
+	void prev() {}
+
 	bool onKey(int key) {
-		if(key == '9') player->decVolume();
+		if(blackness > b_s) {
+			stack->lockLayout();
+			black->setColor( Color(0,0,0,0) );
+			stack->unlockLayout();
+		}
+		blackness = 0;		
+		if(key == ' ')
+			prev();
+		else if(key == '9') player->decVolume();
 		else if(key == '0') player->incVolume();
 		else return false;
 		return true;
 	}
 
+
 	bool onSpecialKey(int key) {
-		if(!rightHasFocus) {
+		stack->lockLayout();
+		if(blackness > b_s) black->setColor( Color(0,0,0,0) );
+		blackness = 0;
+		
+		if(key == enter) {
+			next();
+		} else if(!rightHasFocus) {
 			switch(key) {
-			case up:
-				stack->lockLayout();
-				setLLIndex( listList->getIndex() - 1, false);
-				stack->unlockLayout();
-				return true;
-			case down: 
-				stack->lockLayout();
-				setLLIndex( listList->getIndex() + 1, false);
-				stack->unlockLayout();
-				return true;
+			case up: setLLIndex( listList->getIndex() - 1, false); break;
+			case down: setLLIndex( listList->getIndex() + 1, false); break;
+			case pageup: setLLIndex( listList->getIndex() - listList->lines() + 3, false); break;
+			case pagedown: setLLIndex( listList->getIndex() + listList->lines() - 3, false); break;
 			case right:
 			case enter:
 				rightHasFocus=true;
-				stack->lockLayout();
 				listList->setFocus(false);
 				list->setFocus(true);
-				stack->unlockLayout();
-				return true;
+				break;
+			default:
+				stack->unlockLayout();		   
+				return false;
 			}
 		} else {
 			switch(key) {
-			case up:
-				stack->lockLayout();
-				setLIndex( list->getIndex() - 1, false);
-				stack->unlockLayout();
-				return true;
-			case down: 
-				stack->lockLayout();
-				setLIndex( list->getIndex() + 1, false);
-				stack->unlockLayout();
-				return true;
+			case up: setLIndex( list->getIndex() - 1, false); break;
+			case down: setLIndex( list->getIndex() + 1, false); break;
+			case pageup: setLIndex( list->getIndex() - list->lines() + 3, false); break;
+			case pagedown: setLIndex( list->getIndex() + list->lines() + 3, false); break;
 			case left: 
 				rightHasFocus=false;
-				stack->lockLayout();
 				listList->setFocus(true);
 				list->setFocus(false);
-				stack->unlockLayout();
-				return true;
+				break;
 			case right:
 			case enter:
 				play( list->getIndex() );
-				return true;
+				break;
+			default:
+				stack->unlockLayout();		   
+				return false;
 			}
 		}
-		return false;
+		stack->unlockLayout();
+		return true;
 	}
 
 	virtual const char * name() {return "Music";}
-	virtual const char * image() {return "music.jpg";}
+	virtual const char * image() {return "music.png";}
 	
 	~MusicPart() {
 		stopped=true;

@@ -15,6 +15,7 @@ class ListBox {
 public:
 	virtual int getIndex() = 0;
 	virtual void setIndex(int i, bool update) = 0;
+	virtual void renew(size_t i) = 0;
 	virtual size_t lines() = 0;
 	virtual void setFocus(bool hasFocus) = 0;
 	virtual ~ListBox() {};

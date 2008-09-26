@@ -36,7 +36,9 @@ public:
 
 	int part;
 	int oldpart;
-
+	
+	vector<pair<float,float> > l;
+	
 	bool onSpecialKey(int key) {
 		switch(state) {
 		case showing_killMenu:
@@ -100,7 +102,7 @@ public:
 				--part;
 				if(part < 0) part =0;
 				stack->lockLayout();
-				marker->move(0.25,0.245+0.07*part);
+				marker->move(l[part].first, l[part].second);
 				stack->unlockLayout();
 				return true;
 			case right:
@@ -108,7 +110,7 @@ public:
 				++part;
 				if((size_t)part > parts.size()) part = parts.size();
 				stack->lockLayout();
-				marker->move(0.25,0.245+0.07*part);
+				marker->move(l[part].first, l[part].second);
 				stack->unlockLayout();
 				return true;
 			case escape:
@@ -162,8 +164,35 @@ public:
 			Color(0,0,150,210) );
 		f2->setRadius(0.02);
 		
+		int x;
+		int y;
+		for(x=2; ; ++x) {
+			for(y=x-1; y <= x; ++y)
+				if(x*y >= parts.size() + 1) goto good;
+		} 
+	good:
+		double dx = (0.8-0.3)/x;
+		double dy = (0.8-0.3)/x;
+
+		for(int j=0; j < y; ++j) 
+			for(int i=0; i < x; ++i) 
+				l.push_back( make_pair(i*dx+0.25, j*dy+0.25) );
+
+			
+		for(size_t i=0; i < parts.size(); ++i) {
+			partsMenu->addImage( parts[i]->image() , 2 , Rect(l[i].first+0.015,l[i].second+0.015,l[i].first+dx-0.03,l[i].second+dy-0.015-0.06) );
+			Label * la = partsMenu->addLabel( parts[i]->name() , 2 , l[i].first, l[i].second + dy - 0.07, 0.06);
+			la->center();
+			la->setMaxWidth(dx);
+		}
+		size_t i = parts.size();
+		partsMenu->addImage( "exit.png" , 2 , Rect(l[i].first+0.015,l[i].second+0.015,l[i].first+dx-0.03,l[i].second+dy-0.015-0.06) );
+		Label * la = partsMenu->addLabel( "Shutdown" , 2 , l[i].first, l[i].second + dy - 0.07, 0.06);
+		la->center();
+		la->setMaxWidth(dx);
+			
 		marker = partsMenu->addFill( Color(255,0,0), 1 ,
-									 Rect(0.25, 0.245, 0.75, 0.245 + 0.07 ) );
+									 Rect(l[0].first, l[0].second, l[0].first + dx, l[0].second + dy ) );
 		
 		marker->setGradient( 
 			Color(190,0,0,255),
@@ -172,11 +201,8 @@ public:
 			Color(150,0,0,210) );
 		marker->setRadius(0.02);
 		marker->move(0.25,0.245+0.07*part);
-		
-		for(size_t i=0; i < parts.size(); ++i)
-			partsMenu->addLabel( parts[i]->name() , 2 , 0.3, 0.25 + 0.07*i, 0.06);
-		partsMenu->addLabel( "Shutdown" , 2 , 0.3, 0.25 + 0.07*(parts.size()), 0.06);
 
+		
 		killMenu = stack->constructCard();
 		Fill * f = killMenu->addFill( Color(255,0,0), 0 , 
 									  Rect(0.2, 0.35, 0.8, 0.65) );
