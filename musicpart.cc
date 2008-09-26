@@ -109,6 +109,7 @@ public:
 
 	virtual void onFinish() {
 		if(cnt < 5) return;
+		if( lhook.pls.size() == 0) return;
 		if(!stopped) play( (playing+1) % lhook.pls.size() );
 	}
 	
