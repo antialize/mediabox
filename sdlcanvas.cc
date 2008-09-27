@@ -220,6 +220,7 @@ public:
 	SDL_Surface * renderedText;
 	Color color;
 	bool c;
+	std::pair< double, double > loc;
 	void center() {c = true;}
 	std::string text;
 	SDLLabel(SDLStack * s, SDLCard * c, uint32_t z, float x, float y, const char * v, float si);
@@ -887,7 +888,7 @@ void SDLFill::render(IRect &r) {
 std::map< std::pair< std::string, int>, TTF_Font *> SDLLabel::fontCache;
 
 SDLLabel::SDLLabel(SDLStack * stack, SDLCard * card, uint32_t z, float x, float y, const char * txt, float fs):
-	SDLElement(stack,card,Rect(x,y,x,y),z), fontName("ttf-bitstream-vera/Vera.ttf"), size(fs), text(txt), 
+	SDLElement(stack,card,Rect(x,y,x,y),z), fontName("ttf-bitstream-vera/Vera.ttf"), size(fs), text(txt), loc(x,y),
 	mw(1), renderedText(NULL), color(0,0,0)
 {
 	if(!TTF_WasInit() && TTF_Init()==-1) {
@@ -931,15 +932,17 @@ void SDLLabel::reload() {
 	renderedText = SDL_DisplayFormatAlpha(s);
 	if(renderedText == NULL) SDLERR("SDL_DisplayFormatAlpha");
 	SDL_FreeSurface(s);
-	Rect r = _rect;
-	r.r = r.l + std::min((float)renderedText->w/(float)stack->screen->w,mw);
+	_rect.l = loc.first;
+	_rect.t = loc.second;
+	
+	_rect.r = _rect.l + std::min((float)renderedText->w/(float)stack->screen->w,mw);
 	if(c) {
-		float x = mw - (r.r - r.l);  
-		r.r += x/2;
-		r.l += x/2;
+		float x = mw - (_rect.r - _rect.l);  
+		_rect.r += x/2;
+		_rect.l += x/2;
 	}
-	r.b = r.t + (float)renderedText->h/(float)stack->screen->h;
-	irect = stack->irect(r);
+	_rect.b = _rect.t + (float)renderedText->h/(float)stack->screen->h;
+	irect = stack->irect(_rect);
 	invalidate();
 	stack->update();
 }
