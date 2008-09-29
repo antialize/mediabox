@@ -38,6 +38,7 @@ public:
 	Player * player;
 	Fill * progressBase;
 	Fill * progressBar;
+	Label * nl;
 	bool stopped;
 	int cnt;
 	Fill * black;
@@ -104,12 +105,14 @@ public:
 			buff[pls[i].rfind(".") -x -1] = '\0';
 			return buff;
 		}
-		virtual const char * icon(size_t i) {return "media.png";}
+		virtual const char * icon(size_t i) {
+			return (mp->playing == i)?"playing.png":"media.png";
+		}
 	};
 
 	virtual void onFinish() {
 		if(cnt < 5) return;
-		if( lhook.pls.size() == 0) return;
+		if(lhook.pls.size() == 0) return;
 		if(!stopped) play( (playing+1) % lhook.pls.size() );
 	}
 	
@@ -120,9 +123,18 @@ public:
 		if(n >= lhook.pls.size()) return;
 		char buff[2048];
 		cnt = 0;
-		playing = n;
+		if(playing != n); {
+			size_t op = playing;
+			playing = n;
+			list->renew(op);
+			list->renew(playing);
+		}
 		sprintf(buff, "%s/%s", cfg()("music_root","~/Music"), lhook.pls[n].c_str());
 		player->play(buff);
+		char * x = rindex(buff, '.');
+		if(x != NULL) x[0] = '\0';
+		x  = rindex(buff, '/');
+		nl->setValue( x==NULL?buff:x+1);
 	}
 
 	Fill * createBox(const Rect & r) {
@@ -197,6 +209,9 @@ public:
 		listList->setIndex(0,true);
 		createBox( Rect(0.06, 0.87, 0.40, 0.94 ) );
 		list = createListBox(&lhook, card, 0, Rect(0.41, 0.24, 0.94, 0.94 ), 20);
+
+		nl = card->addLabel("",2,0.09,0.08,0.05);
+		nl->setMaxWidth(0.90);
 
 		progressBase = card->addFill(Color(0,0,0), 0, Rect(0.08,0.15,0.92,0.21));
 		progressBase->setGradient(

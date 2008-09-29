@@ -27,4 +27,4 @@ add_executable(mediabox ${src})
 target_link_libraries(mediabox  ${lib} -lrt)
 
 install(PROGRAMS mediabox DESTINATION bin)
-install(FILES folder.png media.png stOrmblue-scaled.jpg exit.png video.png games.png music.png  DESTINATION share/mediabox)
+install(FILES folder.png media.png stOrmblue-scaled.jpg exit.png video.png games.png music.png playing.png DESTINATION share/mediabox)
