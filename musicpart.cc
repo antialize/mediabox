@@ -245,9 +245,9 @@ public:
 		rightHasFocus=true;
 		listList->setFocus(false);
 
-		b_s = 60*2;
-		b_d = 20*2;
-		b_m = 200;
+		b_s = 30*2;
+		b_d = 40*2;
+		b_m = 227;
 		blackness = 0;
 		black = card->addFill(Color(0,0,0,0) , 10, Rect(0,0,1,1) );
 	}
