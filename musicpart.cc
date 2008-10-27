@@ -106,7 +106,7 @@ public:
 			return buff;
 		}
 		virtual const char * icon(size_t i) {
-			return (mp->playing == i)?"playing.png":"media.png";
+			return (mp->playing == (int)i)?"playing.png":"media.png";
 		}
 	};
 
@@ -123,7 +123,7 @@ public:
 		if(n >= lhook.pls.size()) return;
 		char buff[2048];
 		cnt = 0;
-		if(playing != n); {
+		if(playing != (int)n); {
 			size_t op = playing;
 			playing = n;
 			list->renew(op);
@@ -200,7 +200,7 @@ public:
 	ProgressThread pt;
  
 	MusicPart(Stack * s, InputStack * i, DB * d)
-		: stack(s), input(i), db(d), rightHasFocus(false), llhook(this), lhook(this), pt(this) {
+		: stack(s), input(i), db(d), rightHasFocus(false), playing(-1), llhook(this), lhook(this), pt(this) {
 		stopped = false;
 
 		card = stack->constructCard();
@@ -281,7 +281,7 @@ public:
 		} 
 
 		Rect r = progressBase->rect();
-		double y =  player->getPos();
+		double y = player->getPos();
 		double x = player->getLength();
 		if(x != 0) x = y / x;
 		if(x > 1) x = 1;

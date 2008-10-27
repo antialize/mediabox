@@ -30,11 +30,13 @@ private:
 
 	template <typename T> T get(const char * cmd,Cond & cond,volatile T & elm, bool ur=false) {
 		T tmp;
+		elm = T();
 		m.lock();
 		write(in,cmd,strlen(cmd));
-		bool x = !cond.wait(m,0.5);
+		bool x = !cond.wait(m,1);
 		if(ur) running_ = x;
-		tmp = elm;
+		if(x) tmp = elm;
+		else tmp = T();
 		m.unlock();
 		return tmp;
 	}

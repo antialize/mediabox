@@ -5,6 +5,7 @@
 class PlayerHook {
 public:
 	virtual void onFinish() {};
+	virtual ~PlayerHook() {};
 };
 
 class Player: public InputListener {
