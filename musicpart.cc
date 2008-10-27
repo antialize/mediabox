@@ -72,6 +72,7 @@ public:
 
 		char buff[1024];
 		virtual const char * name(size_t i) {
+			if(i >= pls.size()) return "";
 			strcpy(buff,pls[i].c_str());
 			buff[pls[i].rfind(".")] = '\0';
 			return buff;
@@ -100,6 +101,7 @@ public:
 
 		char buff[1024];
 		virtual const char * name(size_t i) {
+			if(i>=pls.size()) return "";
 			int x = pls[i].rfind("/");
 			strcpy(buff,pls[i].c_str() + x + 1);
 			buff[pls[i].rfind(".") -x -1] = '\0';
@@ -147,8 +149,11 @@ public:
 	}
 
 	void storeFoo() {
-		const char * k2[]={llhook.pls[listList->getIndex()].c_str(), NULL};
-		const char * v2[]={lhook.pls[playing].c_str(), lhook.pls[list->getIndex()].c_str(), NULL};
+		const char * k2[]={
+			(listList->getIndex() >= 0 && listList->getIndex() < (int)llhook.pls.size()) ? llhook.pls[listList->getIndex()].c_str() : "", NULL};
+		const char * v2[]={
+			(playing >= 0 && playing < (int)lhook.pls.size())? lhook.pls[playing].c_str():"", 
+			(list->getIndex() >= 0 && list->getIndex() < (int)lhook.pls.size())?lhook.pls[list->getIndex()].c_str():"", NULL};
 		db->update("music_playlist_index", k2, v2);
 	}
 	
@@ -160,7 +165,7 @@ public:
 	void setLLIndex(int idx,bool update) {
 		listList->setIndex(idx, update);
 		idx = listList->getIndex();
-		if(idx >= (int)llhook.pls.size()) return;
+		if(idx < 0 || idx >= (int)llhook.pls.size()) return;
 		const char * k[] = {NULL};
 		char buff[1024];
 		sprintf(buff,"%d",idx);
