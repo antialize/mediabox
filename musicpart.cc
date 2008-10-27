@@ -112,10 +112,14 @@ public:
 		}
 	};
 
-	virtual void onFinish() {
+	virtual void onFinish2() {
 		if(cnt < 5) return;
 		if(lhook.pls.size() == 0) return;
 		if(!stopped) play( (playing+1) % lhook.pls.size() );
+	}
+	
+	virtual void onFinish() {
+		input->triggerUser(2, NULL);
 	}
 	
 	ListListHook llhook;
@@ -273,6 +277,9 @@ public:
 	}
 
    	bool onUser(int code, void * data) {
+		if(code == 2) {
+			onFinish2(); return true;
+		}
 		if(code != 1) return false;
 		++cnt;
 		if(cnt > 0x00FFFFFF) cnt=0x00FFFFFF;
@@ -293,7 +300,7 @@ public:
 		Rect r2 = Rect(r.l, r.t, r.l + (r.r-r.l)*x, r.b);
 		progressBar->resize(r2);
 		stack->unlockLayout();
-		if(!player->running()) onFinish();
+		if(!player->running()) onFinish2();
 		return true;
 	}
 
