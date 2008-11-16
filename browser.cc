@@ -24,6 +24,7 @@ public:
 	InputStack * i;
 	Fill * thumbFill;
 	Image * thumb;
+	Text * plotBox;
 
 	vector< pair<string, bool> > dirlist; 
 	string dir;
@@ -78,7 +79,23 @@ public:
 			if(dirlist[i].second) path.push_back('/');
 		}
 		thumb->change(locateArt(path).c_str());
-		
+		string p=path;
+		if(p[p.size()-1] == '/') p.append("description");
+		else {
+			size_t b = p.rfind(".");
+			if(b > p.rfind("/")) p.resize(b+1);
+			p.append("plot");
+		}
+		FILE * f =  fopen(p.c_str(),"r");
+		if(f) {
+			char buff[1024*128];
+			buff[fread(buff,1,1024*128-1,f)] = '\0';
+			plotBox->setValue(buff);			
+			fclose(f);
+		} else {
+			plotBox->setValue("");
+		}
+	
 		if(!this->dir.empty()) {
 			const char * k[] = {_hook->name(), this->dir.c_str(), NULL};
 			char x[10];
@@ -133,8 +150,8 @@ public:
 			Color(20,20,255,200) , Color(20,20,255,100),
 			Color(20,20,255,50) , Color(20,20,255,100) );
 		thumbFill->setRadius(0.02);
-		thumb = _card->addImage("",1, Rect(0.59, 0.07, 0.93, 0.93));
-		
+		thumb = _card->addImage("",1, Rect(0.59, 0.07, 0.93, 0.55));
+		plotBox = _card->addText("",1, Rect(0.59, 0.56, 0.93, 0.93),10);
 		lb = createListBox(this, _card, 0, Rect(0.06, 0.06, 0.56, 0.94), 24);
 						
 		const char * k3[] = {_hook->name(), NULL};
@@ -147,6 +164,19 @@ public:
 	Stack * stack() {return _stack;}
 	BrowserHook * hook() {return _hook;}
 	InputListener * listener() {return this;}
+
+	bool onKey(int k) {
+		switch(k) {
+		case '9':
+			plotBox->setFirstLine( plotBox->getFirstLine() -1 );
+			return true;
+		case '0':
+			plotBox->setFirstLine( plotBox->getFirstLine() +1 );
+			return true;
+		default:
+			return false;
+		}
+	}
 
 	bool onSpecialKey(int key) {
 		switch(key) {

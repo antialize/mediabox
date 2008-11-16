@@ -28,6 +28,7 @@ class SDLLabel;
 class SDLStack;
 class SDLFill;
 class SDLCard;
+class SDLText;
 
 struct IRect: public ARect<uint32_t> {
 	typedef uint32_t i_t;
@@ -209,9 +210,28 @@ public:
 	void rescale() {SDLElement::rescale(); dirty=true;}
 };
 
+std::map< std::pair< std::string, int>, TTF_Font *> fontCache;
+TTF_Font * lookupFont(int fontHeight, std::string fontName) {
+	if( fontCache.count( make_pair(fontName, fontHeight) ) == 0) {
+		const char * places[] = {
+			"/usr/share/fonts/","/usr/share/fonts/truetype/",
+			"fonts/","",NULL};
+		for(const char ** place=places; *place; ++place) {
+			char path[2024];
+			sprintf(path,"%s%s",*place,fontName.c_str());
+			TTF_Font * f = TTF_OpenFont(path,fontHeight);
+			if(f) {
+				printf("%s\n",path);
+				fontCache[make_pair(fontName, fontHeight)] = f;
+				break;
+			}
+		}
+	}
+	return fontCache[make_pair(fontName, fontHeight)];
+}
+
 class SDLLabel: public Label, public virtual SDLElement {
 public:
-	static std::map< std::pair< std::string, int>, TTF_Font *> fontCache;
 	uint32_t fontHeight;
 	const char * fontName;
 	float size;
@@ -234,6 +254,30 @@ public:
 	virtual void rescale();
 };
 
+class SDLText: public Text, public virtual SDLElement {
+public: 
+	const char * fontName;
+	uint32_t lc;
+	TTF_Font * font;
+	Color color;
+	int firstLine;
+	std::vector<SDL_Surface *> lines;
+	std::string text;
+	SDLText(SDLStack * s, SDLCard * c, Rect r, uint32_t z, const char * text, uint32_t ll);
+	void render(IRect& r);
+	void reload();
+	void setValue(const char * val);
+	void setLines(uint32_t lines);
+	void setColor(const Color & c);
+	void setFont(const char * font);
+	void setFirstLine(int l);
+	int getFirstLine() {return firstLine;}
+	//void assosiate();
+	//void disassosiate();
+	virtual void rescale();
+	~SDLText();
+};
+
 class SDLCard: public Card {
 private:
 	SDLStack * stack;
@@ -245,6 +289,7 @@ public:
 	Image * addImage(const char * path, uint32_t zindex, Rect r, bool keepAspcet=true);
 	Fill * addFill(const Color & color, uint32_t zindex, Rect rect);
 	Label * addLabel(const char * value, uint32_t zindex, float x, float y, float size);
+	Text * addText(const char * value, uint32_t zindex, Rect r, uint32_t lines);	
 	void remove(SDLElement* elm);
 	void render(IRect rect);
 	void rescale();
@@ -521,7 +566,7 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 			Scaled::sqMutex.lock();
 			for(usermap_t::iterator x=i->users.begin(); x != i->users.end(); ++x) {
 			  printf("%dx%d vs %dx%d\n",x->second->w,x->second->h,s2->w,s2->h);
-				if(x->second->w == s2->w && x->second->h == s2->h) {
+			  if((int)x->second->w == (int)s2->w && (int)x->second->h == (int)s2->h) {
 					x->second->mutex.lock();
 					x->second->ownSurface = false;
 					x->second->surface = i->surface;
@@ -885,8 +930,6 @@ void SDLFill::render(IRect &r) {
 //====================================> Label <======================================
 
 
-std::map< std::pair< std::string, int>, TTF_Font *> SDLLabel::fontCache;
-
 SDLLabel::SDLLabel(SDLStack * stack, SDLCard * card, uint32_t z, float x, float y, const char * txt, float fs):
 	SDLElement(stack,card,Rect(x,y,x,y),z), fontName("ttf-bitstream-vera/Vera.ttf"), size(fs), text(txt), loc(x,y),
 	mw(1), renderedText(NULL), color(0,0,0)
@@ -907,22 +950,7 @@ void SDLLabel::reload() {
 	invalidate();
 	if(renderedText != NULL) {SDL_FreeSurface(renderedText); renderedText=NULL;}
 	fontHeight = (int)((float)stack->screen->h * size);
-	if( fontCache.count( make_pair(fontName, fontHeight) ) == 0) {
-		const char * places[] = {
-			"/usr/share/fonts/","/usr/share/fonts/truetype/",
-			"fonts/","",NULL};
-		for(const char ** place=places; *place; ++place) {
-			char path[2024];
-			sprintf(path,"%s%s",*place,fontName);
-			TTF_Font * f = TTF_OpenFont(path,fontHeight);
-			if(f) {
-				printf("%s\n",path);
-				fontCache[make_pair(fontName, fontHeight)] = f;
-				break;
-			}
-		}
-	}
-	font = fontCache[make_pair(fontName, fontHeight)];
+	font = lookupFont(fontHeight, fontName);
 	if(!font) return;
 	if(text.size() == 0) return;
 	
@@ -971,6 +999,108 @@ void SDLLabel::setColor(const Color & c) {color = c;reload();}
 void SDLLabel::setFont(const char * font) {fontName = font;reload();}
 void SDLLabel::setMaxWidth(float _) {mw=_;reload();}
 
+//========================================> Sdl text <====================================
+
+void SDLText::setValue(const char * val) {text=val; firstLine=0; reload();}
+void SDLText::setLines(uint32_t lines) {lc=lines; reload();}
+void SDLText::setColor(const Color & c)  {color = c;reload();}
+void SDLText::setFont(const char * font) {fontName = font;reload();}
+void SDLText::setFirstLine(int fl) {firstLine = fl;
+	if(firstLine > (int)lines.size() - (int)lc) firstLine=(int)lines.size()-(int)lc;
+	if(firstLine < 0) firstLine=0;
+	invalidate();
+	stack->update();
+}
+
+SDLText::SDLText(SDLStack * s, SDLCard * c, Rect r, uint32_t z, const char * txt, uint32_t ll):
+	SDLElement(s,c, r,z), fontName("ttf-bitstream-vera/Vera.ttf"), text(txt), lc(ll), color(0,0,0), firstLine(0) {
+}
+
+void SDLText::reload() {
+	for(uint32_t i=0; i < lines.size(); ++i) SDL_FreeSurface(lines[i]);
+	lines.clear();
+	if(text.size() == 0) {
+		invalidate();
+		stack->update();
+	}
+	irect = stack->irect(_rect);
+	int h=irect.h() / lc;
+	int t=h;
+	do {
+		font = lookupFont(h, fontName);
+		if(!font) return;
+		--h;
+	} while( TTF_FontHeight(font) > t);
+
+	uint32_t line_start=0;
+	if(text[text.size()-1] != ' ') text.push_back(' ');
+	while(line_start < text.size()) {
+		while(text[line_start] == ' ') ++line_start;
+		std::string l="";
+		uint32_t oline_end;
+		for(uint32_t line_end=line_start; line_end < text.size(); ++line_end) {
+			std::string p = text.substr(line_start, min<uint32_t>(line_end-line_start+1,text.size()-line_start));
+			string::size_type pos = min(p.find_last_not_of(' '),p.find_last_not_of('\n'));
+			if(pos != string::npos) p.erase(pos + 1);
+			if(text[line_end] == ' ' || text[line_end] == '.' || text[line_end] == ',' || 
+			   text[line_end] == '\t' || text[line_end] == '\n' || text[line_end] == '\r' ||
+			   text[line_end] == ':' || text[line_end] == ';' || text[line_end] == '-' ) 
+				;
+			else if(line_end > 0 && text[line_end-1] != ' ')
+				p.push_back('-');
+			else 
+				continue;
+			int w;
+			if(p.size() == 0) w = 0;
+			else TTF_SizeUTF8(font, p.c_str() , &w,NULL);
+			//std::cout << "S: " << p << " W: " << w << std::endl;
+			if(w <= irect.w()) {l=p; oline_end=line_end;}
+			else break;
+		}
+		SDL_Color co = {0,0,0};
+		if(l.empty()) break;
+		//std::cout << oline_end << std::endl;
+		SDL_Surface * s = TTF_RenderUTF8_Solid(font,  l.c_str(), co);
+		if(s == NULL) SDLERR("TTF_RenderUTF8_Solid");
+		SDL_Surface * renderedText = SDL_DisplayFormatAlpha(s);
+		if(renderedText == NULL) SDLERR("SDL_DisplayFormatAlpha");
+		SDL_FreeSurface(s);
+		lines.push_back(renderedText);
+		line_start=oline_end+1;
+	}
+	if(firstLine > (int)lines.size() - (int)lc) firstLine=(int)lines.size()-(int)lc;
+	if(firstLine < 0) firstLine=0;
+	invalidate();
+	stack->update();
+}
+
+void SDLText::render(IRect &r) {
+	SDL_Rect sr = {r.l - irect.l,r.t - irect.t,r.w(),r.h()};
+	int fl=firstLine;
+	uint32_t tt=irect.t;
+	for(uint32_t i=fl; i < fl+lc && i < lines.size(); ++i) {
+		if( tt <= r.b && tt+lines[i]->h >= r.t) {
+			//std::cout << i << std::endl;
+			int top=max<uint32_t>(sr.y,tt);
+			int bot=min<uint32_t>(tt+lines[i]->h, sr.y+sr.h);
+			SDL_Rect ssr = {sr.x, top-tt, sr.w, bot-top};
+			SDL_Rect d = {r.l, top, ssr.w, ssr.h};
+			SDL_BlitSurface(lines[i], &ssr, stack->screen, &d);
+		
+		}
+		tt += lines[i]->h;
+	}
+}
+
+void SDLText::rescale() {
+	reload();
+}
+
+SDLText::~SDLText() {
+	for(uint32_t i=0; i < lines.size(); ++i) SDL_FreeSurface(lines[i]);
+	lines.clear();
+}
+
 //===================================================================================
 
 void SDLCard::render(IRect rect) {
@@ -1018,6 +1148,12 @@ Label * SDLCard::addLabel(const char * value, uint32_t zindex, float x, float y,
 	SDLLabel * l = new SDLLabel(stack,this,zindex, x,y, value ,size);
 	addElement(l);
 	return l;
+}
+
+Text * SDLCard::addText(const char * value, uint32_t zindex, Rect r, uint32_t lines) {
+	SDLText * t = new SDLText(stack,this,r, zindex,  value, lines);
+	addElement(t);
+	return t;
 }
 
 void SDLCard::invalidate() {

@@ -58,12 +58,23 @@ public:
 	virtual void center() = 0;
 };
 
+class Text: public virtual Element {
+public:
+	virtual void setValue(const char * value) = 0;
+	virtual void setLines(uint32_t lines) = 0;
+	virtual void setColor(const Color & c) = 0;
+	virtual void setFont(const char * font) = 0;
+	virtual void setFirstLine(int firstLine) = 0;
+	virtual int getFirstLine() = 0;
+};
+
 class Card {
 public:
 	virtual ~Card() {};
 	virtual Image * addImage(const char * image, uint32_t zindex, Rect r, bool keepAspect=true) = 0;
 	virtual Fill * addFill(const Color & c, uint32_t zindex, Rect r) = 0;
 	virtual Label * addLabel(const char * value, uint32_t zindex, float x, float y, float size) = 0;
+	virtual Text * addText(const char * value, uint32_t zindex, Rect r, uint32_t lines) = 0;
 };
 
 class Stack: public InputListener {
