@@ -27,7 +27,7 @@ public:
 			string ext = path.substr(x+1);
 			//transform(ext.begin(),ext.end(),ext.begin(),tolower2);
 			return ext == "mpg" || ext == "avi" || ext == "xvid" || ext == "mpeg" || ext == "rm" || ext == "mkv"
-				|| ext == "wmv";
+				|| ext == "wmv" || ext == "mp4";
 		}
 		const char * name() {return "video";}
 		virtual void execute(const std::string & path) {
