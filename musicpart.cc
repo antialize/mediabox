@@ -10,7 +10,7 @@
 #include <dirent.h>
 #include "player.hh"
 #include "threading.hh"
-
+#include <algorithm>
 using namespace std;
 
 string trim(string x) {

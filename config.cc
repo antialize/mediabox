@@ -2,9 +2,10 @@
 #include <map>
 #include <string>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 using namespace std;
-
 
 struct scmp {
 	bool operator() (const char * a, const char * b) const {

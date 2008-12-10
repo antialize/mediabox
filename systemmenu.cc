@@ -1,6 +1,7 @@
 #include "systemmenu.hh"
 #include <vector>
 #include "config.hh"
+#include <string.h>
 
 using namespace std;
 

@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "config.hh"
+#include <cassert>
 
 
 #define DIE(format, args...) {fprintf(stderr, format, ##args); exit(1);}
@@ -123,13 +124,16 @@ public:
 	static Cond lqCond;
 	static LoaderThread loader;
 	static bool die;
+	static void kill(Unscaled * x);
 
 	SDL_Surface * surface;
 	char * path;
 	inplace_data<Unscaled> deathrow_inplace;
 	usermap_t users;
 	Mutex mutex;
-	bool inQueue;
+
+	bool processing;
+	bool deleteWhenDone;
 	
 	void removeUser(Scaled * s);
 	void addUser(Scaled * s);
@@ -150,10 +154,13 @@ public:
 	static inplace_list<Scaled, deathrow_reader<Scaled> > deathrow;
 	static ScalerThread scaler;
 	static bool die;
+	static void kill(Scaled * x);
 
 	bool ownSurface;
 	bool keepAspect;
-	bool inQueue;
+	bool processing;
+	bool deleteWhenDone;
+
 	uint32_t w;
 	uint32_t h;
 	inplace_data<Scaled> users_inplace;
@@ -272,8 +279,6 @@ public:
 	void setFont(const char * font);
 	void setFirstLine(int l);
 	int getFirstLine() {return firstLine;}
-	//void assosiate();
-	//void disassosiate();
 	virtual void rescale();
 	~SDLText();
 };
@@ -398,7 +403,7 @@ using namespace std;
 //==================================> SDLElement <===================================
 SDLElement::SDLElement(SDLStack * s, SDLCard * c, Rect r, uint32_t z)
 	: stack(s), card(c), zidx(z), _rect(r), irect(s->irect(r)) {
-//invalidate();
+
 }
 void SDLElement::invalidate() {stack->invalidate(irect);}
 void SDLElement::remove() {
@@ -465,22 +470,19 @@ void Unscaled::removeUser(Scaled * s) {
 		return;
 	}
 	
-	drMutex.lock();
+	drMutex.lock(); 
 	deathrow.push_back(this);
 	mutex.unlock();
 	
 	while(deathrow.size() > 20) {
 		Unscaled * u = deathrow.front();
-		deathrow.pop_front();
-		
 		u->mutex.lock();
-		if(u->inQueue) {
-			u->inQueue = false;
+		deathrow.pop_front();
+		if(!u->users.empty()) {
 			u->mutex.unlock();
-		} else {
-			u->mutex.unlock();
-			delete u;
+			continue;
 		}
+		Unscaled::kill(u);
 	}
 	drMutex.unlock();
 }
@@ -497,24 +499,35 @@ void Unscaled::addUser(Scaled * s) {
 }
 
 Unscaled::Unscaled(const char * p): surface(NULL) {
+	//printf("Unscaled %p\n",this);
 	path = (char*)malloc(strlen(p)+1);
 	strcpy(path,p);
 	allMutex.lock();
 	all[path] = this;
 	allMutex.unlock();
 	lqMutex.lock();
-	inQueue=true;
+	processing=true;
+	deleteWhenDone=false;
 	loadQueue.push(this);
 	lqCond.signal();
 	lqMutex.unlock();
 }
 
-Unscaled::~Unscaled() {
+void Unscaled::kill(Unscaled * x) {
+	//Precondition mutex is locked
+	//printf("ukill %p\n",x);
 	allMutex.lock();
-	all.erase(path);
+	all.erase(x->path);
 	allMutex.unlock();
-	
-	mutex.lock();
+	if(x->processing) {
+		x->deleteWhenDone = true;
+		x->mutex.unlock();
+	} else
+		delete x;
+}
+
+Unscaled::~Unscaled() {
+	//Precondition mutex is locked
 	if(surface) SDL_FreeSurface(surface);
 	surface = NULL;
 	free(path);
@@ -533,20 +546,20 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 				lqCond.wait(lqMutex);
 			}
 			Unscaled * i = loadQueue.top();
+			i->mutex.lock();		
 			loadQueue.pop();
-			i->mutex.lock();
-			if(!i->inQueue) { //Marked for deletion
-				i->mutex.unlock();
+		
+			if(i->deleteWhenDone) { //Marked for deletion
 				delete i;
 				lqMutex.unlock();
 				continue;
 			}
-			i->inQueue = false;
+	
+			char path[2048];
+			strcpy(path,i->path);
 			i->mutex.unlock();
 			lqMutex.unlock();
 
-			char path[2048];
-			strcpy(path,i->path);
 			if(path[0] != '/') {
 				int x = open(path,O_RDONLY);
 				if(x == -1) 
@@ -554,29 +567,43 @@ struct Unscaled::LoaderThread: public Thread<LoaderThread> {
 				else 
 					close(x);
 			}
-			printf("load %s\n",path);
+			//printf("load %s\n",path);
 			SDL_Surface * s = IMG_Load(path);
-			if(!s) {
+			if(s) {
+				SDL_Surface * s2 = SDL_DisplayFormatAlpha(s);
+				SDL_FreeSurface(s);
+				s = s2;
+			}
+			i->mutex.lock();
+			if(i->deleteWhenDone) {
+				delete i;
+				lqMutex.unlock();
 				continue;
 			}
-			SDL_Surface * s2 = SDL_DisplayFormatAlpha(s);
-			SDL_FreeSurface(s);
-			i->mutex.lock();
-			i->surface = s2;
-			Scaled::sqMutex.lock();
-			for(usermap_t::iterator x=i->users.begin(); x != i->users.end(); ++x) {
-			  printf("%dx%d vs %dx%d\n",x->second->w,x->second->h,s2->w,s2->h);
-			  if((int)x->second->w == (int)s2->w && (int)x->second->h == (int)s2->h) {
-					x->second->mutex.lock();
-					x->second->ownSurface = false;
-					x->second->surface = i->surface;
-					x->second->state = 3;
-					x->second->invalidate();
-					x->second->mutex.unlock();
-				} else {
-				  x->second->state = 1;
-				  x->second->inQueue = true;
-				  Scaled::scaleQueue.push(x->second);
+			i->processing = false;
+
+			i->surface = s;
+			if(s) {
+				Scaled::sqMutex.lock();
+				for(usermap_t::iterator x=i->users.begin(); x != i->users.end(); ++x) {
+					//printf("%dx%d vs %dx%d\n", x->second->w, x->second->h, s2->w, s2->h);
+					if((int)x->second->w == (int)s->w && (int)x->second->h == (int)s->h) {
+						x->second->mutex.lock();
+						x->second->ownSurface = false;
+						x->second->surface = i->surface;
+						x->second->state = 3;
+						x->second->invalidate();
+						x->second->mutex.unlock();
+					} else {
+						x->second->mutex.lock();
+						x->second->state = 1;
+						if(!x->second->processing) {
+							x->second->processing=true;
+							//printf("insert into sq: %p\n",x->second);
+							Scaled::scaleQueue.push(x->second);
+						}
+						x->second->mutex.unlock();
+					}
 				}
 			}
 			i->mutex.unlock();
@@ -607,8 +634,9 @@ void Scaled::removeUser(SDLImage * i) {
 	deathrow.push_back(this);
 	while(deathrow.size() > 20) {
 		Scaled * s = deathrow.front();
+		s->mutex.lock();
+		Scaled::kill(s);
 		deathrow.pop_front();
-		delete s;
 	}
 }
 
@@ -623,19 +651,35 @@ void Scaled::addUser(SDLImage * i) {
 	users.push_back(i);
 }
 
+void Scaled::kill(Scaled * x) {
+	//Precondition mutex is locked
+	//printf("skill %p\n",x);
+	if(x->processing) {
+		x->deleteWhenDone = true;
+		x->mutex.unlock();
+	} else
+		delete x;
+}
+
 Scaled::~Scaled() {
+	//Precondition mutex is locked
+	//printf("~Scaled %p\n",this);
 	if(surface && ownSurface) SDL_FreeSurface(surface);
 	if(unscaled) unscaled->removeUser(this);
+	mutex.unlock();
 }
 
 Scaled::Scaled(Unscaled * u, uint32_t a, uint32_t b, bool ka)
 	: keepAspect(ka), w(a), h(b), surface(NULL), unscaled(u), state(0) {
+	//printf("Scaled %p\n",this);
 	u->mutex.lock();
 	u->users[key()] = this;
+	processing = false;
+	deleteWhenDone = false;
 	if(u->surface) {
 		sqMutex.lock();
 		state = 1;
-		inQueue = true;
+		processing = true;
 		scaleQueue.push(this);
 		sqCond.signal();
 		sqMutex.unlock();
@@ -724,14 +768,12 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 			Scaled * i = scaleQueue.top();
 			scaleQueue.pop();
 			i->mutex.lock();
-			if(!i->inQueue) {
-				i->mutex.unlock();
+			if(i->deleteWhenDone) {
 				delete i;
 				sqMutex.unlock();
 				continue;
 			}
-			i->inQueue = false;
-
+			assert(i->processing);
 			sqMutex.unlock();
 			//printf("scaling %16X @ %dx%d\n",i->unscaled,i->w,i->h);
 			SDL_Surface * s = i->unscaled->surface;
@@ -742,11 +784,13 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 				if(w*s->h < h*s->w) h = (s->h * w) / s->w;
 				else w = (s->w * h) / s->h;
 			}
+			//printf("step1  %p\n",i);
 			i->mutex.unlock();
 			SDL_Surface * d = SDL_CreateRGBSurface(
 				SDL_SWSURFACE, w, h, f->BitsPerPixel, f->Rmask,f->Gmask,f->Bmask,f->Amask);
 			if(!d) 
 				exit(1);
+//0xda3360
 			//if(i->state == 1) {
 			//	switch(s->format->BytesPerPixel) {
 			//	case 1: nearestNeighborScale<1>(d,s); break;
@@ -763,17 +807,25 @@ struct Scaled::ScalerThread: public Thread<ScalerThread> {
 			}
 			//}
 			i->mutex.lock();
+			if(i->deleteWhenDone) {
+				delete i;
+				sqMutex.unlock();
+				continue;
+			}
+			i->processing = false;
+			//printf("step2  %p\n",i);
 			if(i->surface && i->ownSurface)
 				SDL_FreeSurface(i->surface); 
 			i->surface = d;
 			i->ownSurface = true;
-			++i->state;
-			if(i->state < 3) {
+			i->state = 3;
+			//++i->state;
+			/*if(i->state < 3) {
 				sqMutex.lock();
 				i->inQueue = true;
 				scaleQueue.push(i);
 				sqMutex.unlock();
-			}
+				}*/
 			i->invalidate();
 			i->mutex.unlock();
 		}
