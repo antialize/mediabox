@@ -1,0 +1,14 @@
+#width=720
+#height=576
+#bpp=32
+#fullscreen=true
+#video_root=/home
+#mysql.user=mediabox
+#mysql.password=password
+#mysql.db=mediabox
+#mysql.host=192.168.0.1
+#mysql.port=3306
+#music_playlistDir=~/playlists
+#music_root=/mnt/media/mp3
+#data_path=/usr/share/mediabox/
+#blackground=/stOrmblue-scaled.jpg

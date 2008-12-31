@@ -370,8 +370,13 @@ public:
 		SDL_Init(SDL_INIT_VIDEO);
 		atexit(SDL_Quit);
 		
-		screen = SDL_SetVideoMode(720, 576, 32,
-								  SDL_SWSURFACE | (cfg()("fullscreen",true)?SDL_FULLSCREEN | SDL_NOFRAME : SDL_RESIZABLE) );
+		screen = SDL_SetVideoMode(
+			cfg()("width",720),
+			cfg()("height",576),
+			cfg()("bpp",32),
+			SDL_SWSURFACE | (cfg()("fullscreen",true)?SDL_FULLSCREEN | SDL_NOFRAME : SDL_RESIZABLE) );
+		
+		SDL_WM_SetCaption("Mediabox","");
 		if(cfg()("fullscreen",true)) SDL_ShowCursor(SDL_DISABLE);
 		SDLImage::start();
 	}

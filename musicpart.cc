@@ -46,6 +46,7 @@ public:
 	int b_s;
 	int b_d;
 	int b_m;
+	volatile double pos,len;
 
 	class ListListHook: public ListBoxHook {
 	public:
@@ -198,16 +199,20 @@ public:
 		setLIndex(i, true);
 	}	
 
-
 	class ProgressThread: public Thread<ProgressThread> {
 	public:
 		MusicPart * mp;
 		ProgressThread(MusicPart * m): mp(m) {}
-		void run() {while(!mp->stopped) {mp->input->triggerUser(1, NULL);usleep(500000);}};
+		void run() {while(!mp->stopped) {
+				mp->pos = mp->player->getPos();
+				mp->len = mp->player->getLength();
+				mp->input->triggerUser(1, NULL);
+				usleep(500000);
+			}
+		};
 	};
 
 	ProgressThread pt;
- 
 	MusicPart(Stack * s, InputStack * i, DB * d)
 		: stack(s), input(i), db(d), rightHasFocus(false), playing(-1), llhook(this), lhook(this), pt(this) {
 		stopped = false;
@@ -293,8 +298,8 @@ public:
 		} 
 
 		Rect r = progressBase->rect();
-		double y = player->getPos();
-		double x = player->getLength();
+		double y = pos;//player->getPos();
+		double x = len;//player->getLength();
 		if(x != 0) x = y / x;
 		if(x > 1) x = 1;
 		Rect r2 = Rect(r.l, r.t, r.l + (r.r-r.l)*x, r.b);
