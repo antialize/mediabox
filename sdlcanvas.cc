@@ -1,3 +1,20 @@
+/*
+ * Mediabox: a light mediacenter solution
+ * Copyright (C) 2009 Jakob Truelsen
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
 #include "canvas.hh"
 #include <stdio.h>
 #include <vector>
@@ -12,6 +29,7 @@
 #include <string>
 #include <utility>
 #include <ext/hash_map>
+//#include <unordered_set>
 #include "util.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -242,14 +260,15 @@ public:
 	uint32_t fontHeight;
 	const char * fontName;
 	float size;
+	std::string text;
+	std::pair< double, double > loc;
 	float mw;
 	TTF_Font * font;
 	SDL_Surface * renderedText;
 	Color color;
 	bool c;
-	std::pair< double, double > loc;
+
 	void center() {c = true;}
-	std::string text;
 	SDLLabel(SDLStack * s, SDLCard * c, uint32_t z, float x, float y, const char * v, float si);
 	void reload();
 	void render(IRect &r);
@@ -264,12 +283,13 @@ public:
 class SDLText: public Text, public virtual SDLElement {
 public: 
 	const char * fontName;
+	std::string text;		
 	uint32_t lc;
 	TTF_Font * font;
 	Color color;
 	int firstLine;
 	std::vector<SDL_Surface *> lines;
-	std::string text;
+
 	SDLText(SDLStack * s, SDLCard * c, Rect r, uint32_t z, const char * text, uint32_t ll);
 	void render(IRect& r);
 	void reload();
@@ -1111,7 +1131,7 @@ void SDLText::reload() {
 			if(p.size() == 0) w = 0;
 			else TTF_SizeUTF8(font, p.c_str() , &w,NULL);
 			//std::cout << "S: " << p << " W: " << w << std::endl;
-			if(w <= irect.w()) {l=p; oline_end=line_end;}
+			if((size_t)w <= irect.w()) {l=p; oline_end=line_end;}
 			else break;
 		}
 		SDL_Color co = {0,0,0};
