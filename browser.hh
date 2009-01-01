@@ -21,6 +21,8 @@
 #include "input.hh"
 #include "db.hh"
 #include <string>
+#include <set>
+#include <algorithm>
 
 class Browser;
 
@@ -32,6 +34,33 @@ public:
 	virtual void execute(const std::string & path) {}
 	virtual const char * defaultDir() = 0;
 	virtual ~BrowserHook() {};
+};
+
+class ExtFilter {
+public:
+	struct tolower2 {
+		int operator() (int i) {return std::tolower(i);}
+	};
+	std::set<std::string> exts;
+	ExtFilter(const std::string & str) {
+		size_t s=0;
+		while(s < str.size()) {
+			size_t n=str.find(',',s);
+			if(n == std::string::npos) n = str.size();
+			std::string ext = str.substr(s, n-s);
+			transform(ext.begin(), ext.end(), ext.begin(), tolower2() );
+			exts.insert(ext);
+			s=n+1;
+		} 
+	}
+		
+	bool operator() (const std::string & path) {
+		size_t x = path.rfind('.');
+		if(x == std::string::npos) return false;
+		std::string ext = path.substr(x+1);
+		transform(ext.begin(), ext.end(), ext.begin(), tolower2() );
+		return exts.count(ext);
+	}
 };
 
 class Browser {

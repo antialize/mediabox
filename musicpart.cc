@@ -71,7 +71,7 @@ public:
 		vector<string> pls;
 		
 		const char * pldir() {
-			return cfg()("music_playlistDir","~/playlists");
+			return cfg()("music.playlistDir","~/playlists");
 		}
 		
 		ListListHook(MusicPart * m): mp(m) {
@@ -80,7 +80,7 @@ public:
 				while(struct dirent * e = readdir(d)) {
 					string x = e->d_name;
 					int _ = x.rfind(".");
-					if(_ > 0 && x.substr(_) == ".m3u")pls.push_back(x);
+					if(_ > 0 && x.substr(_) == ".m3u") pls.push_back(x);
 				}
 			}
 			sort(pls.begin(), pls.end());
@@ -153,7 +153,7 @@ public:
 			list->renew(op);
 			list->renew(playing);
 		}
-		sprintf(buff, "%s/%s", cfg()("music_root","~/Music"), lhook.pls[n].c_str());
+		sprintf(buff, "%s/%s", cfg()("music.root","~/Music"), lhook.pls[n].c_str());
 		player->play(buff);
 		char * x = rindex(buff, '.');
 		if(x != NULL) x[0] = '\0';
@@ -293,6 +293,7 @@ public:
 
 	virtual void pop() {
 		stopped=true;
+		printf("STOP\n");
 		player->stop();
 		stack->popCard();
 		input->popListener();

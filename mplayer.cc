@@ -111,13 +111,17 @@ private:
 public:
 	MPlayer(PlayerHook * h=NULL) {mplayer=in=out=-1;hook=h;}
 	void setHook(PlayerHook * h) {hook=h;}
-	~MPlayer() {
+	void wait() {
 		if(mplayer == -1) return;
-		set("quit\n");
-		if(in) {close(in); in=0;}
-		if(out) {close(out); out=0;}
 		waitpid(mplayer,NULL,0); 
+		if(in) close(in);
+		if(out) close(out);
 		mplayer = -1;
+	}
+
+	~MPlayer() {
+		set("quit\n");
+		wait();
 	}
 	void setVolume(float volume) {set("volume %f 1\n",volume);}
 	void decVolume() {set("volume -10\n");}
@@ -128,17 +132,9 @@ public:
 	float getPos() {return get<float>("get_time_pos\n",pos_cond,pos,true);}
 	void setPos(float p) {set("seek %f 2\n",p);}
 	void setMute(bool mute) {set("mute %d\n",mute?1:0);}
-	void stop() {set("stop\n");}
+	void stop() {set("quit\n");wait();}
 	
 	bool running() {return running_;}
-
-	void wait() {
-		if(mplayer == -1) return;
-		waitpid(mplayer,NULL,0); 
-		if(in) close(in);
-		if(out) close(out);
-		mplayer = -1;
-	}
 
 	void play(const char * file) {
 		int inpipe[2];

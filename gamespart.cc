@@ -38,12 +38,9 @@ public:
 	class Hook: public BrowserHook {
 	public:
 		InputStack * input;
-		virtual bool include(const std::string & path) {
-			string::size_type x = path.rfind('.',extremum<string::size_type>::max());
-			if(x == extremum<string::size_type>::max()) return false;
-			string ext = path.substr(x+1);
-			return ext == "zip" || ext == "smc";
-		}
+		ExtFilter f;
+		virtual bool include(const std::string & path) {return f(path);}
+
 		const char * name() {return "games";}
 		virtual void execute(const std::string & path) {
 			int p = fork();
@@ -54,7 +51,8 @@ public:
 				exit(2);
 			}
 		};
-		const char * defaultDir() {return cfg()("games_root","/home/");}
+		const char * defaultDir() {return cfg()("games.root","/home/");}
+		Hook(): f(cfg()("games.extensions","zip,smc")) {}
 	};
 	
 	Hook hook;
