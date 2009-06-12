@@ -24,6 +24,7 @@ public:
 	virtual bool operator() (const char * name, bool def) const = 0;
 	virtual const char * operator() (const char * name, const char *) const = 0;
 	virtual int operator() (const char * name, int def) const = 0;
+	virtual float operator() (const char * name, float def) const = 0;
 };
 
 Config & cfg();

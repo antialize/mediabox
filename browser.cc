@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "listbox.hh"
-
+#include "config.hh"
 using namespace std;
 
 class STDBrowser: public Browser, public InputListener, ListBoxHook {
@@ -161,15 +161,16 @@ public:
 		const char * v2[]={"index",NULL};
 		db->describeTabel("browser_directory",k1,v1);
 		db->describeTabel("browser_directory_index",k2,v2);
-
-		thumbFill = _card->addFill(Color(100,100,100,100),0,Rect(0.58, 0.06, 0.94, 0.94));
+		float margin=cfg()("margin",(float)0.06);
+		
+		thumbFill = _card->addFill(Color(100,100,100,100),0,Rect(0.58, margin, 1.0-margin, 1.0-margin));
 		thumbFill->setGradient(
 			Color(20,20,255,200) , Color(20,20,255,100),
 			Color(20,20,255,50) , Color(20,20,255,100) );
 		thumbFill->setRadius(0.02);
-		thumb = _card->addImage("",1, Rect(0.59, 0.07, 0.93, 0.55));
-		plotBox = _card->addText("",1, Rect(0.59, 0.56, 0.93, 0.93),10);
-		lb = createListBox(this, _card, 0, Rect(0.06, 0.06, 0.56, 0.94), 24);
+		thumb = _card->addImage("",1, Rect(0.59, 0.01+margin, 0.99-margin, 0.55));
+		plotBox = _card->addText("",1, Rect(0.59, 0.56, 1.0-margin, 0.99-margin),cfg()("plotlines",10));
+		lb = createListBox(this, _card, 0, Rect(margin, margin, 0.56, 1.0 - margin), cfg()("lines",24));
 						
 		const char * k3[] = {_hook->name(), NULL};
 		char buff[1024];

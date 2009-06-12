@@ -80,6 +80,12 @@ public:
 		return atoi(i->second);
 	}
 
+	float operator() (const char * name, float def) const {
+		m_t::const_iterator i=values.find(name);
+		if(i == values.end()) return def;
+		return atof(i->second);
+	}
+
 	const char * operator() (const char * name, const char * def) const {
 		m_t::const_iterator i=values.find(name);
 		if(i == values.end()) return def;
