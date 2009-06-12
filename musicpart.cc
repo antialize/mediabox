@@ -234,23 +234,24 @@ public:
 		: stack(s), input(i), db(d), rightHasFocus(false), playing(-1), llhook(this), lhook(this), pt(this) {
 		stopped = false;
 
+		float m=cfg()("margin",(float)0.06);
 		card = stack->constructCard();
-		createBox( Rect(0.06, 0.06, 0.94, 0.23 ) );
-		listList = createListBox(&llhook, card, 0, Rect(0.06, 0.24, 0.40, 0.86 ), 15 );
+		createBox( Rect(m, m, 1.0-m, 0.23 ) );
+		listList = createListBox(&llhook, card, 0, Rect(m, 0.24, 0.40, 0.92-m ), (cfg()("lines",20) * 0.75) );
 		listList->setIndex(0,true);
-		createBox( Rect(0.06, 0.87, 0.40, 0.94 ) );
-		list = createListBox(&lhook, card, 0, Rect(0.41, 0.24, 0.94, 0.94 ), 20);
+		createBox( Rect(m, 0.93-m, 0.40, 1.0-m ) );
+		list = createListBox(&lhook, card, 0, Rect(0.41, 0.24, 1.0-m, 1.0-m ), cfg()("lines",20) );
 
-		nl = card->addLabel("",2,0.09,0.08,0.05);
-		nl->setMaxWidth(0.90);
+		nl = card->addLabel("",2,0.03+m,0.02+m,0.05);
+		nl->setMaxWidth(1.0-2*m);
 
-		progressBase = card->addFill(Color(0,0,0), 0, Rect(0.08,0.15,0.92,0.21));
+		progressBase = card->addFill(Color(0,0,0), 0, Rect(0.02+m,0.09+m,0.98-m,0.17+m));
 		progressBase->setGradient(
 			Color(200,200,200,255) , Color(150,150,150,255),
 			Color(150,150,150,255) , Color(100,100,100,255) );
 		progressBase->setRadius(0.02);
 
-		progressBar = card->addFill(Color(0,0,0), 0, Rect(0.08,0.15,0.92,0.21));
+		progressBar = card->addFill(Color(0,0,0), 0, Rect(0.02+m,0.09+m,0.98-m,0.17+m));
 		progressBar->setGradient( 
 			Color(255,0,0,255) , Color(255,0,0,100),
 			Color(100,0,0,255) , Color(100,0,0,255) );
