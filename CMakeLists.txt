@@ -15,6 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required(VERSION 2.6)
 project(mediabox)
+
+
+set(CPACK_PACKAGE_NAME "mediabox")
+set(CPACK_PACKAGE_VERSION "0.1")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64)
+set(CPACK_PACKAGE_CONTACT antialize@gmail.com)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Mediabox")
+set(CPACK_PACKAGE_DESCRIPTION "mediabox")
+set(CPACK_GENERATOR "DEB")
+
+INCLUDE(CPack)
+
 set(CMAKE_MODULE_PATH .)
 find_package(Threads REQUIRED)
 find_package(SDL REQUIRED)

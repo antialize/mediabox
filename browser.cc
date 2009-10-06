@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "listbox.hh"
+#include <cstdio>
 
 using namespace std;
 

@@ -30,6 +30,7 @@
 #include "player.hh"
 #include "threading.hh"
 #include <algorithm>
+#include <cstdio>
 using namespace std;
 
 string trim(string x) {

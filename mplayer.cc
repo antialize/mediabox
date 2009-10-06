@@ -69,7 +69,7 @@ private:
 	}
 
 	template <typename T> bool readVar(char * line, const char *scan, T & res, Cond & cond) {
-		char * i = strchr(scan,'=');
+		const char * i = strchr(scan,'=');
 		if(strncmp(line,scan,i-scan+1)) return false;
 		m.lock();
 		sscanf(line,scan,&res);
