@@ -1,3 +1,5 @@
+// -*- mode: c++; tab-width: 4; indent-tabs-mode: t; c-file-style: "stroustrup"; -*-
+// vi:set ts=4 sts=4 sw=4 noet 
 /*
  * Mediabox: a light mediacenter solution
  * Copyright (C) 2009 Jakob Truelsen
@@ -13,7 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "sizemagic.hh"
 #include "browser.hh"
@@ -31,6 +33,7 @@
 #include <fcntl.h>
 #include "listbox.hh"
 #include "config.hh"
+#include <cstdio>
 using namespace std;
 
 class STDBrowser: public Browser, public InputListener, ListBoxHook {

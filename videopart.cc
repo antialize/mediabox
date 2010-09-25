@@ -1,3 +1,5 @@
+// -*- mode: c++; tab-width: 4; indent-tabs-mode: t; c-file-style: "stroustrup"; -*-
+// vi:set ts=4 sts=4 sw=4 noet 
 /*
  * Mediabox: a light mediacenter solution
  * Copyright (C) 2009 Jakob Truelsen
@@ -13,7 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "sizemagic.hh"
 #include "videopart.hh"
@@ -28,6 +30,10 @@
 using namespace std;
 
 #define DIE(msg) {perror(msg); exit(1);}
+
+struct tolower2 {
+	int operator() (int i) {return std::tolower(i);}
+};
 
 class VideoPart: public virtual Part {
 public:
@@ -48,7 +54,7 @@ public:
 				exit(2);
 			}
 		}
-		Hook(): f( cfg()("video.extensions","mpg,avi,xvid,mpeg,rm,mkv,wmv,mp4") ) {}
+		Hook(): f( cfg()("video.extensions","mpg,avi,xvid,mpeg,rm,mkv,wmv,mp4,flv") ) {}
 		const char * defaultDir() {return cfg()("video.root","/home/");}
 	};
 	

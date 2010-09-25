@@ -1,3 +1,5 @@
+// -*- mode: c++; tab-width: 4; indent-tabs-mode: t; c-file-style: "stroustrup"; -*-
+// vi:set ts=4 sts=4 sw=4 noet 
 /*
  * Mediabox: a light mediacenter solution
  * Copyright (C) 2009 Jakob Truelsen
@@ -13,7 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "player.hh"
 #include "threading.hh"
@@ -67,7 +69,7 @@ private:
 	}
 
 	template <typename T> bool readVar(char * line, const char *scan, T & res, Cond & cond) {
-		char * i = strchr(scan,'=');
+		const char * i = strchr(scan,'=');
 		if(strncmp(line,scan,i-scan+1)) return false;
 		m.lock();
 		sscanf(line,scan,&res);
@@ -111,6 +113,7 @@ private:
 public:
 	MPlayer(PlayerHook * h=NULL) {mplayer=in=out=-1;hook=h;}
 	void setHook(PlayerHook * h) {hook=h;}
+
 	void wait() {
 		if(mplayer == -1) return;
 		waitpid(mplayer,NULL,0); 

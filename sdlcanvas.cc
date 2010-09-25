@@ -1,5 +1,8 @@
+// -*- mode: c++; tab-width: 4; indent-tabs-mode: t; c-file-style: "stroustrup"; -*-
+// vi:set ts=4 sts=4 sw=4 noet 
 /*
  * Mediabox: a light mediacenter solution
+>>>>>>> 55b9775fcc1ea7e03e22e3028bf30b9e081f91e0:sdlcanvas.cc
  * Copyright (C) 2009 Jakob Truelsen
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "canvas.hh"
 #include <stdio.h>
@@ -29,7 +32,7 @@
 #include <string>
 #include <utility>
 #include <ext/hash_map>
-//#include <unordered_set>
+
 #include "util.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
